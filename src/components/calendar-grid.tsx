@@ -59,6 +59,10 @@ export function CalendarGrid({
   // Track whether the pointer actually moved, to tell a click from a drag.
   const movedRef = useRef(false);
   const startPtRef = useRef<{ x: number; y: number } | null>(null);
+  // After a drag-drop the browser fires a click that bubbles to the column
+  // background; this flag swallows that one click so it doesn't open the
+  // "new appointment" dialog.
+  const suppressColumnClickRef = useRef(false);
 
   function pointerToGrid(e: PointerEvent | React.PointerEvent) {
     const cols = columnsRef.current!;
@@ -119,6 +123,13 @@ export function CalendarGrid({
         return;
       }
 
+      // A real drag just ended — ignore the click the browser fires next so it
+      // doesn't open the new-appointment dialog on the column underneath.
+      suppressColumnClickRef.current = true;
+      setTimeout(() => {
+        suppressColumnClickRef.current = false;
+      }, 0);
+
       const { dayIndex, yInContent } = pointerToGrid(ev);
       const minutes = snapMinutes((yInContent - grabOffsetY) / PX_PER_MIN);
       const targetDay = days[dayIndex];
@@ -141,6 +152,11 @@ export function CalendarGrid({
   }
 
   function handleColumnClick(e: React.MouseEvent, day: Date) {
+    // Swallow the click that immediately follows a drag-drop.
+    if (suppressColumnClickRef.current) {
+      suppressColumnClickRef.current = false;
+      return;
+    }
     // Only fire for clicks on the empty background, not on an appointment.
     if (e.target !== e.currentTarget) return;
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
