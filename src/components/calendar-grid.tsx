@@ -93,17 +93,20 @@ export function CalendarGrid({
 
     const onMove = (ev: PointerEvent) => {
       const start = startPtRef.current!;
+      // Ignore small jitters: only treat it as a drag once the pointer has
+      // clearly moved. Until then we show no drag visual, so a click stays a
+      // click.
       if (
-        Math.abs(ev.clientX - start.x) > DRAG_THRESHOLD ||
-        Math.abs(ev.clientY - start.y) > DRAG_THRESHOLD
+        !movedRef.current &&
+        Math.abs(ev.clientX - start.x) <= DRAG_THRESHOLD &&
+        Math.abs(ev.clientY - start.y) <= DRAG_THRESHOLD
       ) {
-        movedRef.current = true;
+        return;
       }
+      movedRef.current = true;
       const { dayIndex, yInContent } = pointerToGrid(ev);
       const minutes = snapMinutes((yInContent - grabOffsetY) / PX_PER_MIN);
-      setDrag((d) =>
-        d ? { ...d, dayIndex, minutesFromOpen: minutes } : d,
-      );
+      setDrag({ ...initial, dayIndex, minutesFromOpen: minutes });
     };
 
     const onUp = (ev: PointerEvent) => {
@@ -135,7 +138,6 @@ export function CalendarGrid({
 
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
-    setDrag(initial);
   }
 
   function handleColumnClick(e: React.MouseEvent, day: Date) {
@@ -316,24 +318,33 @@ function DragGhost({
   if (!columnsEl) return null;
   const rect = columnsEl.getBoundingClientRect();
   const colWidth = rect.width / days.length;
+  const cardWidth = colWidth - 4;
   const left = rect.left + drag.dayIndex * colWidth + 2;
   const top = rect.top + drag.minutesFromOpen * PX_PER_MIN;
   const start = dateFromDayOffset(days[drag.dayIndex], drag.minutesFromOpen);
 
   return (
-    <div
-      className="pointer-events-none fixed z-50 overflow-hidden rounded-md border-2 border-primary bg-primary/30 px-1.5 py-1 text-[11px] font-semibold shadow-lg backdrop-blur-sm"
-      style={{
-        left,
-        top,
-        width: colWidth - 4,
-        height: Math.max(drag.lengthMin * PX_PER_MIN, 18),
-      }}
-    >
-      <div className="truncate">{drag.customerName}</div>
-      <div className="opacity-80">
+    <>
+      {/* Drop-target time, shown just above the dragged card */}
+      <div
+        className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-full rounded-md bg-foreground px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-background shadow-md"
+        style={{ left: left + cardWidth / 2, top: top - 4 }}
+      >
         {format(start, "EEE h:mmaaa")}
       </div>
-    </div>
+
+      {/* The dragged card */}
+      <div
+        className="pointer-events-none fixed z-50 overflow-hidden rounded-md border-2 border-primary bg-primary/30 px-1.5 py-1 text-[11px] font-semibold shadow-lg backdrop-blur-sm"
+        style={{
+          left,
+          top,
+          width: cardWidth,
+          height: Math.max(drag.lengthMin * PX_PER_MIN, 18),
+        }}
+      >
+        <div className="truncate">{drag.customerName}</div>
+      </div>
+    </>
   );
 }
