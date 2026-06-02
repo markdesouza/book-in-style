@@ -23,10 +23,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { cn } from "@/lib/utils";
 import { LENGTH_OPTIONS, type AppointmentWithCustomer } from "@/lib/salon";
 import { APPOINTMENT_STATUSES, type AppointmentStatus } from "@/db/schema";
 import { updateAppointment } from "@/app/actions";
+
+/** Highlight colours for the active status button. */
+const STATUS_ACTIVE: Record<AppointmentStatus, string> = {
+  cancelled: "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300",
+  unconfirmed:
+    "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
+  confirmed:
+    "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
+};
 
 export function AppointmentDialog({
   appointment,
@@ -146,21 +155,31 @@ export function AppointmentDialog({
           {/* Status */}
           <div className="grid gap-2">
             <Label>Status</Label>
-            <RadioGroup
-              value={status}
-              onValueChange={(v) => setStatus(v as AppointmentStatus)}
-              className="flex flex-wrap gap-x-6 gap-y-2"
+            <div
+              role="group"
+              aria-label="Status"
+              className="inline-flex w-fit gap-1 rounded-lg border p-1"
             >
-              {APPOINTMENT_STATUSES.map((s) => (
-                <Label
-                  key={s.value}
-                  className="flex cursor-pointer items-center gap-2 font-normal"
-                >
-                  <RadioGroupItem value={s.value} />
-                  {s.label}
-                </Label>
-              ))}
-            </RadioGroup>
+              {APPOINTMENT_STATUSES.map((s) => {
+                const active = status === s.value;
+                return (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => setStatus(s.value)}
+                    aria-pressed={active}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-sm font-medium transition-colors",
+                      active
+                        ? cn(STATUS_ACTIVE[s.value], "shadow-sm")
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
