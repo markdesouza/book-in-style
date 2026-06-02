@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-lc",
+        "export PATH=/Users/mark/.nvm/versions/node/v22.18.0/bin:$PATH && exec npm run dev"
+      ],
+      "port": 3001
+    }
+  ]
+}
