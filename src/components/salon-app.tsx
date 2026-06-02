@@ -12,11 +12,11 @@ import {
   CalendarPlus,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  EyeOff,
   Scissors,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { weekDays, type AppointmentWithCustomer } from "@/lib/salon";
 import type { Customer, NewsEvent } from "@/db/schema";
@@ -105,16 +105,28 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden items-center gap-2 sm:flex">
-            <Switch
-              id="show-cancelled"
-              checked={showCancelled}
-              onCheckedChange={setShowCancelled}
-            />
-            <Label htmlFor="show-cancelled" className="text-sm">
-              Cancelled
-            </Label>
-          </div>
+          <Button
+            variant={showCancelled ? "secondary" : "outline"}
+            size="icon"
+            onClick={() => setShowCancelled((v) => !v)}
+            title={
+              showCancelled
+                ? "Hide cancelled appointments"
+                : "Show cancelled appointments"
+            }
+            aria-pressed={showCancelled}
+            aria-label={
+              showCancelled
+                ? "Hide cancelled appointments"
+                : "Show cancelled appointments"
+            }
+          >
+            {showCancelled ? (
+              <Eye className="size-4" />
+            ) : (
+              <EyeOff className="size-4" />
+            )}
+          </Button>
 
           <NewsFeed
             news={news}
@@ -132,18 +144,6 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
             <CalendarPlus className="size-4" />
             <span className="hidden sm:inline">New</span>
           </Button>
-        </div>
-
-        {/* Cancelled toggle on mobile, full width row */}
-        <div className="flex w-full items-center gap-2 sm:hidden">
-          <Switch
-            id="show-cancelled-m"
-            checked={showCancelled}
-            onCheckedChange={setShowCancelled}
-          />
-          <Label htmlFor="show-cancelled-m" className="text-sm">
-            Show cancelled appointments
-          </Label>
         </div>
       </header>
 
