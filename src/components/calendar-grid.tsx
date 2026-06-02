@@ -245,6 +245,7 @@ export function CalendarGrid({
 
                 {/* Column body */}
                 <div
+                  data-day-body
                   className="relative cursor-copy"
                   style={{ height: DAY_HEIGHT_PX }}
                   onClick={(e) => handleColumnClick(e, day)}
@@ -365,6 +366,13 @@ function DragGhost({
   if (!columnsEl) return null;
   const rect = columnsEl.getBoundingClientRect();
   const colWidth = rect.width / days.length;
+  // Cards are positioned inside the column *body*, which sits below the sticky
+  // day-header row. Anchor the ghost to the body top so it lines up exactly
+  // with where the appointment will land (and with the cards it overlaps).
+  const bodyTop =
+    columnsEl
+      .querySelector<HTMLElement>("[data-day-body]")
+      ?.getBoundingClientRect().top ?? rect.top;
   const targetDay = days[drag.dayIndex];
   const start = dateFromDayOffset(targetDay, drag.minutesFromOpen);
 
@@ -388,7 +396,7 @@ function DragGhost({
   const unit = colWidth / lanes;
   const left = rect.left + drag.dayIndex * colWidth + lane * unit + 1;
   const width = span * unit - 2;
-  const top = rect.top + drag.minutesFromOpen * PX_PER_MIN;
+  const top = bodyTop + drag.minutesFromOpen * PX_PER_MIN;
 
   return (
     <>
