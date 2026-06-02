@@ -176,7 +176,10 @@ export function AppointmentDialog({
                     className={cn(
                       "px-3 py-1.5 text-sm transition-colors",
                       active
-                        ? cn(STATUS_ACTIVE[s.value], "font-bold text-foreground")
+                        ? cn(
+                            STATUS_ACTIVE[s.value],
+                            "font-bold text-gray-700 dark:text-gray-200",
+                          )
                         : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
