@@ -232,6 +232,7 @@ export function CalendarGrid({
                   {laid.map(({ appt, top, height, lane, lanes }) => {
                     const dragging = drag?.id === appt.id;
                     const cancelled = appt.status === "cancelled";
+                    const unconfirmed = appt.status === "unconfirmed";
                     const moved = Boolean(appt.originalStartsAt);
                     const widthPct = 100 / lanes;
                     return (
@@ -247,6 +248,8 @@ export function CalendarGrid({
                             : moved
                               ? "border-amber-200 border-l-amber-400 bg-amber-50 text-amber-950 hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100"
                               : "border-rose-200 border-l-rose-400 bg-rose-50 text-rose-950 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-100",
+                          // Unconfirmed bookings read as tentative via a dashed outline.
+                          !cancelled && unconfirmed && "border-dashed",
                           dragging && "opacity-30",
                         )}
                         style={{

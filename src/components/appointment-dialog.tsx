@@ -23,8 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { LENGTH_OPTIONS, type AppointmentWithCustomer } from "@/lib/salon";
+import { APPOINTMENT_STATUSES, type AppointmentStatus } from "@/db/schema";
 import { updateAppointment } from "@/app/actions";
 
 export function AppointmentDialog({
@@ -38,22 +39,23 @@ export function AppointmentDialog({
   const [pending, startTransition] = useTransition();
   const [notes, setNotes] = useState("");
   const [lengthMin, setLengthMin] = useState(30);
+  const [status, setStatus] = useState<AppointmentStatus>("unconfirmed");
 
   // Reset form whenever a different appointment is opened.
   useEffect(() => {
     if (appointment) {
       setNotes(appointment.notes ?? "");
       setLengthMin(appointment.lengthMin);
+      setStatus(appointment.status);
     }
   }, [appointment]);
 
   if (!appointment) return null;
-  const cancelled = appointment.status === "cancelled";
   const c = appointment.customer;
 
   const save = () => {
     startTransition(async () => {
-      await updateAppointment(appointment.id, { notes, lengthMin });
+      await updateAppointment(appointment.id, { notes, lengthMin, status });
       toast.success("Appointment updated");
       router.refresh();
       onClose();
@@ -64,18 +66,7 @@ export function AppointmentDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {c.name}
-            {cancelled && <Badge variant="secondary">Cancelled</Badge>}
-            {appointment.originalStartsAt && !cancelled && (
-              <Badge
-                variant="outline"
-                className="border-amber-400 text-amber-600"
-              >
-                Moved
-              </Badge>
-            )}
-          </DialogTitle>
+          <DialogTitle>Appointment details</DialogTitle>
           <DialogDescription className="flex items-center gap-1.5">
             <CalendarClock className="size-3.5" />
             {format(appointment.startsAt, "EEEE d MMM, h:mmaaa")}
@@ -83,28 +74,28 @@ export function AppointmentDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-1 text-sm">
-          {(c.phone || c.email) && (
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
-              {c.phone && (
-                <a
-                  href={`tel:${c.phone.replace(/\s+/g, "")}`}
-                  className="flex items-center gap-1 hover:text-foreground hover:underline"
-                >
-                  <Phone className="size-3.5" />
-                  {c.phone}
-                </a>
-              )}
-              {c.email && (
-                <a
-                  href={`mailto:${c.email}`}
-                  className="flex items-center gap-1 hover:text-foreground hover:underline"
-                >
-                  <Mail className="size-3.5" />
-                  {c.email}
-                </a>
-              )}
-            </div>
-          )}
+          {/* Customer */}
+          <div className="space-y-1">
+            <p className="text-base font-semibold text-foreground">{c.name}</p>
+            {c.phone && (
+              <a
+                href={`tel:${c.phone.replace(/\s+/g, "")}`}
+                className="flex w-fit items-center gap-1.5 text-muted-foreground hover:text-foreground hover:underline"
+              >
+                <Phone className="size-3.5" />
+                {c.phone}
+              </a>
+            )}
+            {c.email && (
+              <a
+                href={`mailto:${c.email}`}
+                className="flex w-fit items-center gap-1.5 text-muted-foreground hover:text-foreground hover:underline"
+              >
+                <Mail className="size-3.5" />
+                {c.email}
+              </a>
+            )}
+          </div>
 
           {appointment.originalStartsAt && (
             <p className="text-xs text-muted-foreground">
@@ -113,13 +104,14 @@ export function AppointmentDialog({
             </p>
           )}
 
+          {/* Duration */}
           <div className="grid gap-2">
-            <Label htmlFor="length">Length</Label>
+            <Label htmlFor="duration">Duration</Label>
             <Select
               value={String(lengthMin)}
-              onValueChange={(v) => setLengthMin(Number(v))}
+              onValueChange={(v) => v && setLengthMin(Number(v))}
             >
-              <SelectTrigger id="length">
+              <SelectTrigger id="duration">
                 <SelectValue>{(v: string) => `${v} min`}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -132,6 +124,7 @@ export function AppointmentDialog({
             </Select>
           </div>
 
+          {/* Notes */}
           <div className="grid gap-2">
             <Label htmlFor="notes">Notes</Label>
             <Textarea
@@ -141,6 +134,26 @@ export function AppointmentDialog({
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
             />
+          </div>
+
+          {/* Status */}
+          <div className="grid gap-2">
+            <Label>Status</Label>
+            <RadioGroup
+              value={status}
+              onValueChange={(v) => setStatus(v as AppointmentStatus)}
+              className="flex flex-wrap gap-x-6 gap-y-2"
+            >
+              {APPOINTMENT_STATUSES.map((s) => (
+                <Label
+                  key={s.value}
+                  className="flex cursor-pointer items-center gap-2 font-normal"
+                >
+                  <RadioGroupItem value={s.value} />
+                  {s.label}
+                </Label>
+              ))}
+            </RadioGroup>
           </div>
         </div>
 
