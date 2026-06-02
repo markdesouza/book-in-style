@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { CalendarClock, Mail, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -67,9 +67,8 @@ export function AppointmentDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Appointment details</DialogTitle>
-          <DialogDescription className="flex items-center gap-1.5">
-            <CalendarClock className="size-3.5" />
-            {format(appointment.startsAt, "EEEE d MMM, h:mmaaa")}
+          <DialogDescription className="sr-only">
+            Edit the appointment&rsquo;s status, duration and notes.
           </DialogDescription>
         </DialogHeader>
 
@@ -104,14 +103,22 @@ export function AppointmentDialog({
             </p>
           )}
 
+          {/* Time */}
+          <div className="flex items-center gap-2">
+            <Label>Time:</Label>
+            <span className="text-muted-foreground">
+              {format(appointment.startsAt, "EEEE d MMM, h:mmaaa")}
+            </span>
+          </div>
+
           {/* Duration */}
-          <div className="grid gap-2">
+          <div className="flex items-center gap-3">
             <Label htmlFor="duration">Duration</Label>
             <Select
               value={String(lengthMin)}
               onValueChange={(v) => v && setLengthMin(Number(v))}
             >
-              <SelectTrigger id="duration">
+              <SelectTrigger id="duration" className="w-32">
                 <SelectValue>{(v: string) => `${v} min`}</SelectValue>
               </SelectTrigger>
               <SelectContent>
