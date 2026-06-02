@@ -12,6 +12,7 @@ import {
   PX_PER_MIN,
   dateFromDayOffset,
   formatTimeRange,
+  gridLines,
   hourMarks,
   layoutDay,
   minutesFromDayStart,
@@ -209,12 +210,17 @@ export function CalendarGrid({
                   style={{ height: DAY_HEIGHT_PX }}
                   onClick={(e) => handleColumnClick(e, day)}
                 >
-                  {/* hour lines */}
-                  {hourMarks().map((m) => (
+                  {/* grid lines: light at 15-min, darker on the hour */}
+                  {gridLines().map((g) => (
                     <div
-                      key={m.hour}
-                      className="pointer-events-none absolute inset-x-0 border-t border-border/60"
-                      style={{ top: m.top }}
+                      key={g.top}
+                      className={cn(
+                        "pointer-events-none absolute inset-x-0 border-t",
+                        g.major
+                          ? "border-gray-300 dark:border-gray-700"
+                          : "border-gray-200/70 dark:border-gray-800/60",
+                      )}
+                      style={{ top: g.top }}
                     />
                   ))}
 
@@ -244,12 +250,10 @@ export function CalendarGrid({
                           "absolute overflow-hidden rounded-md border border-l-4 px-1.5 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors",
                           "touch-none select-none",
                           cancelled
-                            ? "border-dashed border-l-muted-foreground/40 border-muted-foreground/40 bg-muted text-muted-foreground line-through"
-                            : moved
-                              ? "border-amber-200 border-l-amber-400 bg-amber-50 text-amber-950 hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100"
-                              : "border-rose-200 border-l-rose-400 bg-rose-50 text-rose-950 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-100",
-                          // Unconfirmed bookings read as tentative via a dashed outline.
-                          !cancelled && unconfirmed && "border-dashed",
+                            ? "border-gray-300 border-l-gray-400 bg-gray-100 text-gray-500 line-through dark:border-gray-700 dark:border-l-gray-600 dark:bg-gray-800/60 dark:text-gray-400"
+                            : unconfirmed
+                              ? "border-yellow-300 border-l-yellow-400 bg-yellow-100 text-yellow-950 hover:bg-yellow-200 dark:border-yellow-900 dark:border-l-yellow-600 dark:bg-yellow-950/40 dark:text-yellow-100"
+                              : "border-green-300 border-l-green-500 bg-green-100 text-green-950 hover:bg-green-200 dark:border-green-900 dark:border-l-green-600 dark:bg-green-950/40 dark:text-green-100",
                           dragging && "opacity-30",
                         )}
                         style={{
