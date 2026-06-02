@@ -60,6 +60,31 @@ Then re-run `npm run db:push` (and optionally `npm run db:seed`).
 | `npm run db:push`   | Push the Drizzle schema to the database |
 | `npm run db:seed`   | Reset and load demo data                |
 | `npm run db:studio` | Open Drizzle Studio to browse the data  |
+| `npm run db:pull`   | Copy production (Turso) data into `local.db` |
+
+### Pulling production data into `local.db`
+
+To test locally against a realistic snapshot of production, copy the hosted
+Turso data into your local SQLite file:
+
+```bash
+npm run db:pull
+```
+
+This dumps the Turso database and rebuilds `local.db` from it, so `npm run dev`
+(which uses `local.db` when the `TURSO_*` vars are absent) sees the same data as
+production. Notes:
+
+- It uses your logged-in **Turso CLI** session — run `turso auth login` first.
+  No tokens are read from `.env`, and nothing is written back to Turso (it's a
+  one-way prod → local copy).
+- **`local.db` is overwritten.** It's a snapshot, not a live sync — re-run the
+  command whenever you want fresh data.
+- Pull a different database or into a different file:
+  ```bash
+  TURSO_DB_NAME=my-db npm run db:pull            # different source database
+  bash scripts/pull-db.sh test.db                # different target file
+  ```
 
 ## Project layout
 
@@ -83,4 +108,6 @@ src/
   lib/
     salon.ts            # time/layout helpers + overlap algorithm
     queries.ts          # server-side data fetching
+scripts/
+  pull-db.sh            # copy production Turso data into local.db (npm run db:pull)
 ```
