@@ -107,7 +107,7 @@ export function AppointmentDialog({
           <div className="flex items-center gap-2">
             <Label>Time:</Label>
             <span className="text-muted-foreground">
-              {format(appointment.startsAt, "EEEE d MMM, h:mmaaa")}
+              {format(appointment.startsAt, "h:mmaaa, EEEE (d MMMM)")}
             </span>
           </div>
 
