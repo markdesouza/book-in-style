@@ -74,8 +74,8 @@ export function AppointmentDialog({
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Appointment details</DialogTitle>
+        <DialogHeader className="-mx-4 -mt-4 rounded-t-xl border-b bg-muted/50 p-4">
+          <DialogTitle className="font-bold">Appointment details</DialogTitle>
           <DialogDescription className="sr-only">
             Edit the appointment&rsquo;s status, duration and notes.
           </DialogDescription>
@@ -84,7 +84,7 @@ export function AppointmentDialog({
         <div className="space-y-4 py-1 text-sm">
           {/* Customer */}
           <div className="space-y-1">
-            <p className="text-base font-semibold text-foreground">{c.name}</p>
+            <p className="font-bold text-foreground">{c.name}</p>
             {c.phone && (
               <a
                 href={`tel:${c.phone.replace(/\s+/g, "")}`}
