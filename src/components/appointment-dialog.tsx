@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { CalendarClock, Mail, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -23,9 +23,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { LENGTH_OPTIONS, type AppointmentWithCustomer } from "@/lib/salon";
+import { APPOINTMENT_STATUSES, type AppointmentStatus } from "@/db/schema";
 import { updateAppointment } from "@/app/actions";
+
+/** Highlight background for the active status button (text stays black). */
+const STATUS_ACTIVE: Record<AppointmentStatus, string> = {
+  cancelled: "bg-rose-100 dark:bg-rose-500/20",
+  unconfirmed: "bg-amber-100 dark:bg-amber-500/20",
+  confirmed: "bg-emerald-100 dark:bg-emerald-500/20",
+};
 
 export function AppointmentDialog({
   appointment,
@@ -38,22 +46,23 @@ export function AppointmentDialog({
   const [pending, startTransition] = useTransition();
   const [notes, setNotes] = useState("");
   const [lengthMin, setLengthMin] = useState(30);
+  const [status, setStatus] = useState<AppointmentStatus>("unconfirmed");
 
   // Reset form whenever a different appointment is opened.
   useEffect(() => {
     if (appointment) {
       setNotes(appointment.notes ?? "");
       setLengthMin(appointment.lengthMin);
+      setStatus(appointment.status);
     }
   }, [appointment]);
 
   if (!appointment) return null;
-  const cancelled = appointment.status === "cancelled";
   const c = appointment.customer;
 
   const save = () => {
     startTransition(async () => {
-      await updateAppointment(appointment.id, { notes, lengthMin });
+      await updateAppointment(appointment.id, { notes, lengthMin, status });
       toast.success("Appointment updated");
       router.refresh();
       onClose();
@@ -63,48 +72,36 @@ export function AppointmentDialog({
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {c.name}
-            {cancelled && <Badge variant="secondary">Cancelled</Badge>}
-            {appointment.originalStartsAt && !cancelled && (
-              <Badge
-                variant="outline"
-                className="border-amber-400 text-amber-600"
-              >
-                Moved
-              </Badge>
-            )}
-          </DialogTitle>
-          <DialogDescription className="flex items-center gap-1.5">
-            <CalendarClock className="size-3.5" />
-            {format(appointment.startsAt, "EEEE d MMM, h:mmaaa")}
+        <DialogHeader className="-mx-4 -mt-4 rounded-t-xl border-b bg-muted/50 p-4">
+          <DialogTitle className="font-bold">Appointment details</DialogTitle>
+          <DialogDescription className="sr-only">
+            Edit the appointment&rsquo;s status, duration and notes.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-1 text-sm">
-          {(c.phone || c.email) && (
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
-              {c.phone && (
-                <a
-                  href={`tel:${c.phone.replace(/\s+/g, "")}`}
-                  className="flex items-center gap-1 hover:text-foreground hover:underline"
-                >
-                  <Phone className="size-3.5" />
-                  {c.phone}
-                </a>
-              )}
-              {c.email && (
-                <a
-                  href={`mailto:${c.email}`}
-                  className="flex items-center gap-1 hover:text-foreground hover:underline"
-                >
-                  <Mail className="size-3.5" />
-                  {c.email}
-                </a>
-              )}
-            </div>
-          )}
+          {/* Customer */}
+          <div className="space-y-1">
+            <p className="font-bold text-foreground">{c.name}</p>
+            {c.phone && (
+              <a
+                href={`tel:${c.phone.replace(/\s+/g, "")}`}
+                className="flex w-fit items-center gap-1.5 text-muted-foreground hover:text-foreground hover:underline"
+              >
+                <Phone className="size-3.5" />
+                {c.phone}
+              </a>
+            )}
+            {c.email && (
+              <a
+                href={`mailto:${c.email}`}
+                className="flex w-fit items-center gap-1.5 text-muted-foreground hover:text-foreground hover:underline"
+              >
+                <Mail className="size-3.5" />
+                {c.email}
+              </a>
+            )}
+          </div>
 
           {appointment.originalStartsAt && (
             <p className="text-xs text-muted-foreground">
@@ -113,13 +110,24 @@ export function AppointmentDialog({
             </p>
           )}
 
-          <div className="grid gap-2">
-            <Label htmlFor="length">Length</Label>
+          {/* Time */}
+          <div className="flex items-center gap-2">
+            <Label className="font-bold">Time:</Label>
+            <span className="text-muted-foreground">
+              {format(appointment.startsAt, "h:mmaaa, EEEE (d MMMM)")}
+            </span>
+          </div>
+
+          {/* Duration */}
+          <div className="flex items-center gap-3">
+            <Label htmlFor="duration" className="font-bold">
+              Duration:
+            </Label>
             <Select
               value={String(lengthMin)}
-              onValueChange={(v) => setLengthMin(Number(v))}
+              onValueChange={(v) => v && setLengthMin(Number(v))}
             >
-              <SelectTrigger id="length">
+              <SelectTrigger id="duration" className="w-32">
                 <SelectValue>{(v: string) => `${v} min`}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -132,8 +140,11 @@ export function AppointmentDialog({
             </Select>
           </div>
 
+          {/* Notes */}
           <div className="grid gap-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes" className="font-bold">
+              Notes:
+            </Label>
             <Textarea
               id="notes"
               value={notes}
@@ -141,6 +152,36 @@ export function AppointmentDialog({
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
             />
+          </div>
+
+          {/* Status */}
+          <div className="grid gap-2">
+            <Label className="font-bold">Status:</Label>
+            <div
+              role="group"
+              aria-label="Status"
+              className="inline-flex w-fit divide-x divide-border overflow-hidden rounded-lg border"
+            >
+              {APPOINTMENT_STATUSES.map((s) => {
+                const active = status === s.value;
+                return (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => setStatus(s.value)}
+                    aria-pressed={active}
+                    className={cn(
+                      "px-3 py-1.5 text-sm transition-colors",
+                      active
+                        ? cn(STATUS_ACTIVE[s.value], "font-bold text-foreground")
+                        : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

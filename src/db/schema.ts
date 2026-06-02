@@ -23,7 +23,10 @@ export const customers = sqliteTable("customers", {
  * `startsAt` is the current scheduled start (epoch seconds).
  * `originalStartsAt` records the first booked time; set the first time an
  * appointment is rescheduled so the UI can flag it as "moved".
- * `status` is "booked" or "cancelled".
+ * `status` is one of:
+ *   - "unconfirmed" newly booked, not yet confirmed (the default)
+ *   - "confirmed"   confirmed with the customer
+ *   - "cancelled"   cancelled
  */
 export const appointments = sqliteTable("appointments", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -33,9 +36,9 @@ export const appointments = sqliteTable("appointments", {
   startsAt: integer("starts_at", { mode: "timestamp" }).notNull(),
   lengthMin: integer("length_min").notNull().default(30),
   notes: text("notes"),
-  status: text("status", { enum: ["booked", "cancelled"] })
+  status: text("status", { enum: ["unconfirmed", "confirmed", "cancelled"] })
     .notNull()
-    .default("booked"),
+    .default("unconfirmed"),
   originalStartsAt: integer("original_starts_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
@@ -68,6 +71,16 @@ export const newsEvents = sqliteTable("news_events", {
     .notNull()
     .default(sql`(unixepoch())`),
 });
+
+export type AppointmentStatus = "unconfirmed" | "confirmed" | "cancelled";
+
+/** Status options in display order, for radio groups / filters. */
+export const APPOINTMENT_STATUSES: { value: AppointmentStatus; label: string }[] =
+  [
+    { value: "cancelled", label: "Cancelled" },
+    { value: "unconfirmed", label: "Unconfirmed" },
+    { value: "confirmed", label: "Confirmed" },
+  ];
 
 export type Customer = typeof customers.$inferSelect;
 export type NewCustomer = typeof customers.$inferInsert;

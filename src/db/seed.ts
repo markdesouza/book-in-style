@@ -33,13 +33,13 @@ async function seed() {
     .insert(appointments)
     .values([
       // Today-ish: a couple of overlapping bookings to show the lane layout.
-      { customerId: byName("Olivia").id, startsAt: at(1, 9, 0), lengthMin: 45, notes: "Half head foils + trim." },
-      { customerId: byName("Liam").id, startsAt: at(1, 9, 20), lengthMin: 30, notes: "Skin fade." },
-      { customerId: byName("Sophie").id, startsAt: at(1, 10, 30), lengthMin: 60, notes: "Balayage consult." },
-      { customerId: byName("Marcus").id, startsAt: at(1, 14, 0), lengthMin: 20, notes: "Beard tidy." },
+      { customerId: byName("Olivia").id, startsAt: at(1, 9, 0), lengthMin: 45, notes: "Half head foils + trim.", status: "confirmed" as const },
+      { customerId: byName("Liam").id, startsAt: at(1, 9, 20), lengthMin: 30, notes: "Skin fade.", status: "confirmed" as const },
+      { customerId: byName("Sophie").id, startsAt: at(1, 10, 30), lengthMin: 60, notes: "Balayage consult." }, // unconfirmed (default)
+      { customerId: byName("Marcus").id, startsAt: at(1, 14, 0), lengthMin: 20, notes: "Beard tidy.", status: "confirmed" as const },
 
-      { customerId: byName("Ava").id, startsAt: at(2, 11, 0), lengthMin: 90, notes: "Full colour + cut." },
-      { customerId: byName("Noah").id, startsAt: at(2, 11, 30), lengthMin: 40, notes: "Wash and style." },
+      { customerId: byName("Ava").id, startsAt: at(2, 11, 0), lengthMin: 90, notes: "Full colour + cut." }, // unconfirmed (default)
+      { customerId: byName("Noah").id, startsAt: at(2, 11, 30), lengthMin: 40, notes: "Wash and style.", status: "confirmed" as const },
 
       // A rescheduled (moved) appointment.
       {
@@ -48,6 +48,7 @@ async function seed() {
         lengthMin: 60,
         notes: "Moved from 1pm at customer request.",
         originalStartsAt: at(3, 13, 0),
+        status: "confirmed" as const,
       },
 
       // A cancelled appointment.
