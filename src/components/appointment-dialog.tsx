@@ -114,7 +114,7 @@ export function AppointmentDialog({
 
           {/* Time */}
           <div className="flex items-center gap-2">
-            <Label>Time:</Label>
+            <Label className="font-bold">Time:</Label>
             <span className="text-muted-foreground">
               {format(appointment.startsAt, "h:mmaaa, EEEE (d MMMM)")}
             </span>
@@ -122,7 +122,9 @@ export function AppointmentDialog({
 
           {/* Duration */}
           <div className="flex items-center gap-3">
-            <Label htmlFor="duration">Duration</Label>
+            <Label htmlFor="duration" className="font-bold">
+              Duration:
+            </Label>
             <Select
               value={String(lengthMin)}
               onValueChange={(v) => v && setLengthMin(Number(v))}
@@ -142,7 +144,9 @@ export function AppointmentDialog({
 
           {/* Notes */}
           <div className="grid gap-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes" className="font-bold">
+              Notes:
+            </Label>
             <Textarea
               id="notes"
               value={notes}
@@ -154,7 +158,7 @@ export function AppointmentDialog({
 
           {/* Status */}
           <div className="grid gap-2">
-            <Label>Status</Label>
+            <Label className="font-bold">Status:</Label>
             <div
               role="group"
               aria-label="Status"
