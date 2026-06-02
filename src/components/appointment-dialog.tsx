@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { CalendarClock, Mail, Phone, RotateCcw, Trash2 } from "lucide-react";
+import { CalendarClock, Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -25,10 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { LENGTH_OPTIONS, type AppointmentWithCustomer } from "@/lib/salon";
-import {
-  setAppointmentStatus,
-  updateAppointment,
-} from "@/app/actions";
+import { updateAppointment } from "@/app/actions";
 
 export function AppointmentDialog({
   appointment,
@@ -63,18 +60,6 @@ export function AppointmentDialog({
     });
   };
 
-  const toggleCancel = () => {
-    startTransition(async () => {
-      await setAppointmentStatus(
-        appointment.id,
-        cancelled ? "booked" : "cancelled",
-      );
-      toast.success(cancelled ? "Appointment restored" : "Appointment cancelled");
-      router.refresh();
-      onClose();
-    });
-  };
-
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
@@ -101,16 +86,22 @@ export function AppointmentDialog({
           {(c.phone || c.email) && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
               {c.phone && (
-                <span className="flex items-center gap-1">
+                <a
+                  href={`tel:${c.phone.replace(/\s+/g, "")}`}
+                  className="flex items-center gap-1 hover:text-foreground hover:underline"
+                >
                   <Phone className="size-3.5" />
                   {c.phone}
-                </span>
+                </a>
               )}
               {c.email && (
-                <span className="flex items-center gap-1">
+                <a
+                  href={`mailto:${c.email}`}
+                  className="flex items-center gap-1 hover:text-foreground hover:underline"
+                >
                   <Mail className="size-3.5" />
                   {c.email}
-                </span>
+                </a>
               )}
             </div>
           )}
@@ -153,29 +144,12 @@ export function AppointmentDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-          <Button
-            variant={cancelled ? "outline" : "ghost"}
-            onClick={toggleCancel}
-            disabled={pending}
-            className={
-              cancelled ? "" : "text-destructive hover:text-destructive"
-            }
-          >
-            {cancelled ? (
-              <>
-                <RotateCcw className="size-4" />
-                Undo cancel
-              </>
-            ) : (
-              <>
-                <Trash2 className="size-4" />
-                Cancel appointment
-              </>
-            )}
+        <DialogFooter className="sm:justify-between">
+          <Button variant="outline" onClick={onClose} disabled={pending}>
+            Close
           </Button>
           <Button onClick={save} disabled={pending}>
-            Save changes
+            Update
           </Button>
         </DialogFooter>
       </DialogContent>
