@@ -28,13 +28,11 @@ import { LENGTH_OPTIONS, type AppointmentWithCustomer } from "@/lib/salon";
 import { APPOINTMENT_STATUSES, type AppointmentStatus } from "@/db/schema";
 import { updateAppointment } from "@/app/actions";
 
-/** Highlight colours for the active status button. */
+/** Highlight background for the active status button (text stays black). */
 const STATUS_ACTIVE: Record<AppointmentStatus, string> = {
-  cancelled: "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300",
-  unconfirmed:
-    "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
-  confirmed:
-    "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
+  cancelled: "bg-rose-100 dark:bg-rose-500/20",
+  unconfirmed: "bg-amber-100 dark:bg-amber-500/20",
+  confirmed: "bg-emerald-100 dark:bg-emerald-500/20",
 };
 
 export function AppointmentDialog({
@@ -175,7 +173,7 @@ export function AppointmentDialog({
                     className={cn(
                       "px-3 py-1.5 text-sm transition-colors",
                       active
-                        ? cn(STATUS_ACTIVE[s.value], "font-bold")
+                        ? cn(STATUS_ACTIVE[s.value], "font-bold text-foreground")
                         : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
