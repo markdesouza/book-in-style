@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, isSameDay } from "date-fns";
-import { MoveRight } from "lucide-react";
+import { MoveHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -282,18 +282,20 @@ export function CalendarGrid({
                           zIndex: dragging ? 0 : 5,
                         }}
                       >
-                        <div className="flex items-center gap-1 font-semibold">
-                          {moved && !cancelled && (
-                            <MoveRight
-                              aria-label="Rescheduled"
-                              className="size-3 shrink-0 text-amber-600"
-                            />
-                          )}
-                          <span className="truncate">{appt.customer.name}</span>
+                        <div className="truncate font-semibold">
+                          {appt.customer.name}
                         </div>
                         {height > 30 && (
-                          <div className="truncate opacity-80">
-                            {formatTimeRange(appt.startsAt, appt.lengthMin)}
+                          <div className="flex items-center gap-1 opacity-80">
+                            <span className="truncate">
+                              {formatTimeRange(appt.startsAt, appt.lengthMin)}
+                            </span>
+                            {moved && !cancelled && (
+                              <MoveHorizontal
+                                aria-label="Rescheduled"
+                                className="size-3 shrink-0 text-amber-600"
+                              />
+                            )}
                           </div>
                         )}
                         {height > 52 && appt.notes && (
