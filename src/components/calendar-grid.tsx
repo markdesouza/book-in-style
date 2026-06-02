@@ -93,17 +93,20 @@ export function CalendarGrid({
 
     const onMove = (ev: PointerEvent) => {
       const start = startPtRef.current!;
+      // Ignore small jitters: only treat it as a drag once the pointer has
+      // clearly moved. Until then we show no drag visual, so a click stays a
+      // click.
       if (
-        Math.abs(ev.clientX - start.x) > DRAG_THRESHOLD ||
-        Math.abs(ev.clientY - start.y) > DRAG_THRESHOLD
+        !movedRef.current &&
+        Math.abs(ev.clientX - start.x) <= DRAG_THRESHOLD &&
+        Math.abs(ev.clientY - start.y) <= DRAG_THRESHOLD
       ) {
-        movedRef.current = true;
+        return;
       }
+      movedRef.current = true;
       const { dayIndex, yInContent } = pointerToGrid(ev);
       const minutes = snapMinutes((yInContent - grabOffsetY) / PX_PER_MIN);
-      setDrag((d) =>
-        d ? { ...d, dayIndex, minutesFromOpen: minutes } : d,
-      );
+      setDrag({ ...initial, dayIndex, minutesFromOpen: minutes });
     };
 
     const onUp = (ev: PointerEvent) => {
@@ -135,7 +138,6 @@ export function CalendarGrid({
 
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
-    setDrag(initial);
   }
 
   function handleColumnClick(e: React.MouseEvent, day: Date) {
