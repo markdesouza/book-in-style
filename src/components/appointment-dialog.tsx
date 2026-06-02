@@ -162,7 +162,7 @@ export function AppointmentDialog({
             <div
               role="group"
               aria-label="Status"
-              className="inline-flex w-fit gap-1 rounded-lg border p-1"
+              className="inline-flex w-fit divide-x divide-border overflow-hidden rounded-lg border"
             >
               {APPOINTMENT_STATUSES.map((s) => {
                 const active = status === s.value;
@@ -173,10 +173,10 @@ export function AppointmentDialog({
                     onClick={() => setStatus(s.value)}
                     aria-pressed={active}
                     className={cn(
-                      "rounded-md px-3 py-1 text-sm font-medium transition-colors",
+                      "px-3 py-1.5 text-sm transition-colors",
                       active
-                        ? cn(STATUS_ACTIVE[s.value], "shadow-sm")
-                        : "text-muted-foreground hover:text-foreground",
+                        ? cn(STATUS_ACTIVE[s.value], "font-bold")
+                        : "font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     {s.label}
