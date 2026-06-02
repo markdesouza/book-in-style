@@ -317,6 +317,8 @@ export function CalendarGrid({
           drag={drag}
           columnsEl={columnsRef.current}
           days={days}
+          appointments={appointments}
+          showCancelled={showCancelled}
         />
       )}
     </div>
@@ -328,25 +330,48 @@ function DragGhost({
   drag,
   columnsEl,
   days,
+  appointments,
+  showCancelled,
 }: {
   drag: DragState;
   columnsEl: HTMLDivElement | null;
   days: Date[];
+  appointments: AppointmentWithCustomer[];
+  showCancelled: boolean;
 }) {
   if (!columnsEl) return null;
   const rect = columnsEl.getBoundingClientRect();
   const colWidth = rect.width / days.length;
-  const cardWidth = colWidth - 4;
-  const left = rect.left + drag.dayIndex * colWidth + 2;
+  const targetDay = days[drag.dayIndex];
+  const start = dateFromDayOffset(targetDay, drag.minutesFromOpen);
+
+  // Lay the dragged appointment out alongside the others on the target day (at
+  // its new position) so it narrows into a lane when it overlaps something.
+  const others = appointments
+    .filter((a) => isSameDay(a.startsAt, targetDay))
+    .filter((a) => showCancelled || a.status !== "cancelled")
+    .filter((a) => a.id !== drag.id);
+  const ghostAppt = {
+    id: drag.id,
+    startsAt: start,
+    lengthMin: drag.lengthMin,
+  } as unknown as AppointmentWithCustomer;
+  const laid = layoutDay([...others, ghostAppt]);
+  const mine = laid.find((l) => l.appt.id === drag.id);
+  const lanes = mine?.lanes ?? 1;
+  const lane = mine?.lane ?? 0;
+
+  const laneWidth = colWidth / lanes;
+  const left = rect.left + drag.dayIndex * colWidth + lane * laneWidth + 1;
+  const width = laneWidth - 2;
   const top = rect.top + drag.minutesFromOpen * PX_PER_MIN;
-  const start = dateFromDayOffset(days[drag.dayIndex], drag.minutesFromOpen);
 
   return (
     <>
       {/* Drop-target time, shown just above the dragged card */}
       <div
         className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-full rounded-md bg-foreground px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-background shadow-md"
-        style={{ left: left + cardWidth / 2, top: top - 4 }}
+        style={{ left: left + width / 2, top: top - 4 }}
       >
         {format(start, "EEE h:mmaaa")}
       </div>
@@ -357,7 +382,7 @@ function DragGhost({
         style={{
           left,
           top,
-          width: cardWidth,
+          width,
           height: Math.max(drag.lengthMin * PX_PER_MIN, 18),
         }}
       >
