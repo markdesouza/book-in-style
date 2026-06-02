@@ -186,10 +186,15 @@ export function AppointmentDialog({
         </div>
 
         <DialogFooter className="sm:justify-between">
-          <Button variant="outline" onClick={onClose} disabled={pending}>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={pending}
+            className="uppercase"
+          >
             Close
           </Button>
-          <Button onClick={save} disabled={pending}>
+          <Button onClick={save} disabled={pending} className="uppercase">
             Update
           </Button>
         </DialogFooter>
