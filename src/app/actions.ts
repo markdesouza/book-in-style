@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { format } from "date-fns";
 import { db } from "@/db";
-import { appointments, customers, newsEvents } from "@/db/schema";
+import {
+  appointments,
+  customers,
+  newsEvents,
+  type AppointmentStatus,
+} from "@/db/schema";
 import { MAX_LENGTH, MIN_LENGTH } from "@/lib/salon";
 
 function clampLength(min: number) {
@@ -93,15 +98,32 @@ export async function createAppointment(input: {
   return row;
 }
 
-/** Update editable details of an appointment (notes and/or length). */
+/** Update editable details of an appointment (notes, length, and/or status). */
 export async function updateAppointment(
   id: number,
-  input: { notes?: string; lengthMin?: number },
+  input: { notes?: string; lengthMin?: number; status?: AppointmentStatus },
 ) {
+  const [appt] = await db
+    .select()
+    .from(appointments)
+    .where(eq(appointments.id, id));
+  if (!appt) throw new Error("Appointment not found");
+
   const set: Record<string, unknown> = { updatedAt: new Date() };
   if (input.notes !== undefined) set.notes = input.notes.trim() || null;
   if (input.lengthMin !== undefined) set.lengthMin = clampLength(input.lengthMin);
+  if (input.status !== undefined) set.status = input.status;
   await db.update(appointments).set(set).where(eq(appointments.id, id));
+
+  // Post a news event when an appointment is newly cancelled.
+  if (input.status === "cancelled" && appt.status !== "cancelled") {
+    const name = await customerName(appt.customerId);
+    await db.insert(newsEvents).values({
+      appointmentId: id,
+      type: "cancelled",
+      message: `${name} cancelled ${format(appt.startsAt, "EEE d MMM h:mmaaa")}.`,
+    });
+  }
   revalidatePath("/");
 }
 
@@ -132,32 +154,6 @@ export async function rescheduleAppointment(id: number, newStartMs: number) {
     type: "moved",
     message: `${name} moved to ${format(newStart, "EEE d MMM h:mmaaa")}.`,
   });
-  revalidatePath("/");
-}
-
-export async function setAppointmentStatus(
-  id: number,
-  status: "booked" | "cancelled",
-) {
-  const [appt] = await db
-    .select()
-    .from(appointments)
-    .where(eq(appointments.id, id));
-  if (!appt) throw new Error("Appointment not found");
-
-  await db
-    .update(appointments)
-    .set({ status, updatedAt: new Date() })
-    .where(eq(appointments.id, id));
-
-  if (status === "cancelled") {
-    const name = await customerName(appt.customerId);
-    await db.insert(newsEvents).values({
-      appointmentId: id,
-      type: "cancelled",
-      message: `${name} cancelled ${format(appt.startsAt, "EEE d MMM h:mmaaa")}.`,
-    });
-  }
   revalidatePath("/");
 }
 
