@@ -70,6 +70,18 @@ export function hourMarks(): { hour: number; top: number }[] {
   return marks;
 }
 
+/**
+ * Horizontal grid lines at 15-minute intervals. `major` is true on the hour,
+ * letting the UI draw hour lines darker than the quarter-hour lines.
+ */
+export function gridLines(): { top: number; major: boolean }[] {
+  const lines: { top: number; major: boolean }[] = [];
+  for (let minutes = 0; minutes <= DAY_MINUTES; minutes += 15) {
+    lines.push({ top: minutes * PX_PER_MIN, major: minutes % 60 === 0 });
+  }
+  return lines;
+}
+
 export type AppointmentWithCustomer = Appointment & { customer: Customer };
 
 /** An appointment positioned for rendering, plus its horizontal lane. */
