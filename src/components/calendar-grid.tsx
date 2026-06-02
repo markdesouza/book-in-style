@@ -274,14 +274,15 @@ export function CalendarGrid({
                   )}
 
                   {/* appointments */}
-                  {laid.map(({ appt, top, height, lane, lanes }) => {
+                  {laid.map(({ appt, top, height, lane, lanes, span }) => {
                     // The dragged appointment is shown by the floating ghost,
                     // so skip its in-grid card while dragging.
                     if (drag?.id === appt.id) return null;
                     const cancelled = appt.status === "cancelled";
                     const unconfirmed = appt.status === "unconfirmed";
                     const moved = Boolean(appt.originalStartsAt);
-                    const widthPct = 100 / lanes;
+                    const leftPct = (lane / lanes) * 100;
+                    const widthPct = (span / lanes) * 100;
                     return (
                       <button
                         key={appt.id}
@@ -299,7 +300,7 @@ export function CalendarGrid({
                         style={{
                           top,
                           height,
-                          left: `calc(${lane * widthPct}% + 1px)`,
+                          left: `calc(${leftPct}% + 1px)`,
                           width: `calc(${widthPct}% - 2px)`,
                           zIndex: 5,
                         }}
@@ -382,10 +383,11 @@ function DragGhost({
   const mine = laid.find((l) => l.appt.id === drag.id);
   const lanes = mine?.lanes ?? 1;
   const lane = mine?.lane ?? 0;
+  const span = mine?.span ?? 1;
 
-  const laneWidth = colWidth / lanes;
-  const left = rect.left + drag.dayIndex * colWidth + lane * laneWidth + 1;
-  const width = laneWidth - 2;
+  const unit = colWidth / lanes;
+  const left = rect.left + drag.dayIndex * colWidth + lane * unit + 1;
+  const width = span * unit - 2;
   const top = rect.top + drag.minutesFromOpen * PX_PER_MIN;
 
   return (

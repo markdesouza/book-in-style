@@ -89,10 +89,13 @@ export interface LaidOutAppointment {
   appt: AppointmentWithCustomer;
   top: number;
   height: number;
-  /** 0-based column within its overlap cluster. */
+  /** 0-based starting column within its overlap cluster. */
   lane: number;
   /** Total number of columns in its overlap cluster. */
   lanes: number;
+  /** How many columns this appointment spans (it expands across columns that
+   * have nothing overlapping it, so non-overlapping bookings stay wide). */
+  span: number;
 }
 
 /**
@@ -116,10 +119,9 @@ export function layoutDay(
 
   const flush = () => {
     if (cluster.length === 0) return;
-    // Greedy lane assignment within the cluster.
+    // Greedy column assignment within the cluster.
     const laneEnds: number[] = []; // end time (ms) of last appt in each lane
-    const assigned: { item: AppointmentWithCustomer; lane: number }[] = [];
-    for (const item of cluster) {
+    const placed = cluster.map((item) => {
       const start = item.startsAt.getTime();
       const end = start + item.lengthMin * 60_000;
       let lane = laneEnds.findIndex((e) => e <= start);
@@ -129,16 +131,29 @@ export function layoutDay(
       } else {
         laneEnds[lane] = end;
       }
-      assigned.push({ item, lane });
-    }
+      return { item, start, end, lane };
+    });
     const lanes = laneEnds.length;
-    for (const { item, lane } of assigned) {
+    for (const p of placed) {
+      // Expand rightwards across any columns that hold nothing overlapping this
+      // appointment's own time span. This keeps a booking full/wide unless it
+      // genuinely overlaps another — rather than inheriting the whole cluster's
+      // peak column count.
+      let span = 1;
+      for (let c = p.lane + 1; c < lanes; c++) {
+        const blocked = placed.some(
+          (q) => q.lane === c && q.start < p.end && q.end > p.start,
+        );
+        if (blocked) break;
+        span++;
+      }
       result.push({
-        appt: item,
-        top: topPx(item.startsAt),
-        height: Math.max(heightPx(item.lengthMin), 18),
-        lane,
+        appt: p.item,
+        top: topPx(p.item.startsAt),
+        height: Math.max(heightPx(p.item.lengthMin), 18),
+        lane: p.lane,
         lanes,
+        span,
       });
     }
     cluster = [];
