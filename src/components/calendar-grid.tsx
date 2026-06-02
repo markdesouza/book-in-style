@@ -194,7 +194,28 @@ export function CalendarGrid({
             const dayAppts = appointments
               .filter((a) => isSameDay(a.startsAt, day))
               .filter((a) => showCancelled || a.status !== "cancelled");
-            const laid = layoutDay(dayAppts);
+
+            // While dragging, lay the day out as if the dragged appointment
+            // were at its live drop position: removed from its origin day and
+            // added (as a placeholder) to the target day. This makes the
+            // appointments underneath narrow into lanes to make room. The
+            // placeholder itself is skipped when rendering (the floating ghost
+            // represents it).
+            let forLayout = dayAppts;
+            if (drag) {
+              forLayout = dayAppts.filter((a) => a.id !== drag.id);
+              if (isSameDay(day, days[drag.dayIndex])) {
+                forLayout = [
+                  ...forLayout,
+                  {
+                    id: drag.id,
+                    startsAt: dateFromDayOffset(day, drag.minutesFromOpen),
+                    lengthMin: drag.lengthMin,
+                  } as unknown as AppointmentWithCustomer,
+                ];
+              }
+            }
+            const laid = layoutDay(forLayout);
 
             return (
               <div
@@ -254,7 +275,9 @@ export function CalendarGrid({
 
                   {/* appointments */}
                   {laid.map(({ appt, top, height, lane, lanes }) => {
-                    const dragging = drag?.id === appt.id;
+                    // The dragged appointment is shown by the floating ghost,
+                    // so skip its in-grid card while dragging.
+                    if (drag?.id === appt.id) return null;
                     const cancelled = appt.status === "cancelled";
                     const unconfirmed = appt.status === "unconfirmed";
                     const moved = Boolean(appt.originalStartsAt);
@@ -272,14 +295,13 @@ export function CalendarGrid({
                             : unconfirmed
                               ? "border-yellow-300 border-l-yellow-400 bg-yellow-100 text-yellow-950 hover:bg-yellow-200 dark:border-yellow-900 dark:border-l-yellow-600 dark:bg-yellow-950/40 dark:text-yellow-100"
                               : "border-green-300 border-l-green-500 bg-green-100 text-green-950 hover:bg-green-200 dark:border-green-900 dark:border-l-green-600 dark:bg-green-950/40 dark:text-green-100",
-                          dragging && "opacity-30",
                         )}
                         style={{
                           top,
                           height,
                           left: `calc(${lane * widthPct}% + 1px)`,
                           width: `calc(${widthPct}% - 2px)`,
-                          zIndex: dragging ? 0 : 5,
+                          zIndex: 5,
                         }}
                       >
                         <div className="truncate font-semibold">
