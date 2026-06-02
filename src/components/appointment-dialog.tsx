@@ -28,11 +28,14 @@ import { LENGTH_OPTIONS, type AppointmentWithCustomer } from "@/lib/salon";
 import { APPOINTMENT_STATUSES, type AppointmentStatus } from "@/db/schema";
 import { updateAppointment } from "@/app/actions";
 
-/** Highlight background for the active status button (text stays black). */
+/**
+ * Highlight background for the active status button (text stays black).
+ * Matches the calendar's status card colours: grey / yellow / green.
+ */
 const STATUS_ACTIVE: Record<AppointmentStatus, string> = {
-  cancelled: "bg-rose-100 dark:bg-rose-500/20",
-  unconfirmed: "bg-amber-100 dark:bg-amber-500/20",
-  confirmed: "bg-emerald-100 dark:bg-emerald-500/20",
+  cancelled: "bg-gray-200 dark:bg-gray-700",
+  unconfirmed: "bg-yellow-100 dark:bg-yellow-500/20",
+  confirmed: "bg-green-100 dark:bg-green-500/20",
 };
 
 export function AppointmentDialog({
