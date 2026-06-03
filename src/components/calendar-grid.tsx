@@ -184,11 +184,12 @@ export function CalendarGrid({
                 {format(new Date().setHours(m.hour, 0), "ha")}
               </div>
             ))}
-            {/* current-time dot, centred on the gutter / grid divider line */}
+            {/* current-time dot, centred on the gutter / grid divider line.
+                +1px aligns the dot's centre with the 2px line's centre. */}
             {nowVisible && (
               <div
                 className="pointer-events-none absolute right-0 size-2.5 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-500"
-                style={{ top: nowTop }}
+                style={{ top: nowTop + 1 }}
               />
             )}
           </div>
