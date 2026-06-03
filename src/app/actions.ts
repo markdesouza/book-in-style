@@ -98,10 +98,15 @@ export async function createAppointment(input: {
   return row;
 }
 
-/** Update editable details of an appointment (notes, length, and/or status). */
+/** Update editable details of an appointment (notes, length, status, customer). */
 export async function updateAppointment(
   id: number,
-  input: { notes?: string; lengthMin?: number; status?: AppointmentStatus },
+  input: {
+    notes?: string;
+    lengthMin?: number;
+    status?: AppointmentStatus;
+    customerId?: number;
+  },
 ) {
   const [appt] = await db
     .select()
@@ -113,6 +118,7 @@ export async function updateAppointment(
   if (input.notes !== undefined) set.notes = input.notes.trim() || null;
   if (input.lengthMin !== undefined) set.lengthMin = clampLength(input.lengthMin);
   if (input.status !== undefined) set.status = input.status;
+  if (input.customerId !== undefined) set.customerId = input.customerId;
   await db.update(appointments).set(set).where(eq(appointments.id, id));
 
   // Post a news event when an appointment is newly cancelled.

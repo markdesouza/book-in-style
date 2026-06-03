@@ -158,6 +158,7 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
 
       <AppointmentDialog
         appointment={editing}
+        customers={customers}
         onClose={() => setEditing(null)}
       />
 
