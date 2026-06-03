@@ -62,10 +62,6 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
 
   const step = isMobile ? 1 : 7;
 
-  const rangeLabel = isMobile
-    ? format(viewDate, "EEEE d MMMM")
-    : `${format(days[0], "d MMM")} – ${format(days[6], "d MMM yyyy")}`;
-
   const unseen = news.filter((n) => !n.seen).length;
 
   const todayInView = days.some((d) => isSameDay(d, new Date()));
@@ -78,8 +74,8 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
           <span className="hidden sm:inline">Book in Style</span>
         </div>
 
-        {/* Centred date navigation + current range */}
-        <div className="flex min-w-0 items-center justify-center gap-2 sm:gap-3">
+        {/* Centred date navigation */}
+        <div className="flex items-center justify-center">
           <div className="flex shrink-0 items-center gap-1">
             <Button
               variant="outline"
@@ -100,9 +96,6 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
             >
               <ChevronRight className="size-4" />
             </Button>
-          </div>
-          <div className="truncate text-sm font-medium text-muted-foreground">
-            {rangeLabel}
           </div>
         </div>
 
