@@ -264,15 +264,16 @@ export function CalendarGrid({
                     />
                   ))}
 
-                  {/* now indicator — the line spans every day; the dot marks
-                      the current day */}
+                  {/* now indicator — the line spans every day and sits *under*
+                      the appointment cards; the dot sits at the far left, by
+                      the time labels */}
                   {nowVisible && (
                     <div
-                      className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-red-500"
+                      className="pointer-events-none absolute inset-x-0 border-t-2 border-red-500"
                       style={{ top: nowTop }}
                     >
-                      {isToday && (
-                        <div className="absolute -left-1 -top-1 size-2 rounded-full bg-red-500" />
+                      {dayIndex === 0 && (
+                        <div className="absolute left-0 size-2.5 -translate-y-1/2 rounded-full bg-red-500" />
                       )}
                     </div>
                   )}
