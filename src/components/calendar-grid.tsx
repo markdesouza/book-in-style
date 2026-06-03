@@ -264,13 +264,16 @@ export function CalendarGrid({
                     />
                   ))}
 
-                  {/* now indicator */}
-                  {nowVisible && isToday && (
+                  {/* now indicator — the line spans every day; the dot marks
+                      the current day */}
+                  {nowVisible && (
                     <div
                       className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-red-500"
                       style={{ top: nowTop }}
                     >
-                      <div className="absolute -left-1 -top-1 size-2 rounded-full bg-red-500" />
+                      {isToday && (
+                        <div className="absolute -left-1 -top-1 size-2 rounded-full bg-red-500" />
+                      )}
                     </div>
                   )}
 
