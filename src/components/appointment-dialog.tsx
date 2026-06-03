@@ -251,21 +251,36 @@ export function AppointmentDialog({
               </div>
             )}
 
-            {/* Phone / email hidden while changing the customer. */}
-            {!changing && customer.phone && (
-              <a
-                href={`tel:${customer.phone.replace(/\s+/g, "")}`}
-                className={contactLink}
-              >
-                <Phone className="size-3.5" />
-                {customer.phone}
-              </a>
-            )}
-            {!changing && customer.email && (
-              <a href={`mailto:${customer.email}`} className={contactLink}>
-                <Mail className="size-3.5" />
-                {customer.email}
-              </a>
+            {/* While changing, keep the icons but mask the details. */}
+            {changing ? (
+              <>
+                <div className="flex w-fit items-center gap-1.5 text-muted-foreground">
+                  <Phone className="size-3.5" />
+                  ---- --- ---
+                </div>
+                <div className="flex w-fit items-center gap-1.5 text-muted-foreground">
+                  <Mail className="size-3.5" />
+                  -------@-------.com
+                </div>
+              </>
+            ) : (
+              <>
+                {customer.phone && (
+                  <a
+                    href={`tel:${customer.phone.replace(/\s+/g, "")}`}
+                    className={contactLink}
+                  >
+                    <Phone className="size-3.5" />
+                    {customer.phone}
+                  </a>
+                )}
+                {customer.email && (
+                  <a href={`mailto:${customer.email}`} className={contactLink}>
+                    <Mail className="size-3.5" />
+                    {customer.email}
+                  </a>
+                )}
+              </>
             )}
           </div>
 
