@@ -239,7 +239,7 @@ export function AppointmentDialog({
                     onClick={startChange}
                   >
                     <ArrowRightLeft className="size-3.5" />
-                    Change
+                    Reassign
                   </Button>
                 </div>
               </div>
