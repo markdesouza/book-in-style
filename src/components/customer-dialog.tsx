@@ -224,11 +224,15 @@ export function CustomerDialog({
               )}
             </div>
             <div className="flex gap-2">
-              <Select value={birthDay} onValueChange={(v) => v && setBirthDay(v)}>
+              <Select
+                value={birthDay}
+                onValueChange={(v) => v && setBirthDay(v === "-" ? "" : v)}
+              >
                 <SelectTrigger className="w-20" aria-label="Birthday day">
                   <SelectValue placeholder="Day" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="-">-</SelectItem>
                   {DAYS.map((d) => (
                     <SelectItem key={d} value={String(d)}>
                       {d}
@@ -238,14 +242,15 @@ export function CustomerDialog({
               </Select>
               <Select
                 value={birthMonth}
-                onValueChange={(v) => v && setBirthMonth(v)}
+                onValueChange={(v) => v && setBirthMonth(v === "-" ? "" : v)}
               >
                 <SelectTrigger className="w-24" aria-label="Birthday month">
                   <SelectValue placeholder="Month">
-                    {(v: string) => MONTHS[Number(v) - 1]}
+                    {(v: string) => (v === "-" ? "-" : MONTHS[Number(v) - 1])}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="-">-</SelectItem>
                   {MONTHS.map((name, i) => (
                     <SelectItem key={name} value={String(i + 1)}>
                       {name}
