@@ -76,7 +76,8 @@ export function AppointmentDialog({
   const [draftCustomerId, setDraftCustomerId] = useState<number | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
-  const [startStr, setStartStr] = useState("");
+  const [startStr, setStartStr] = useState(""); // datetime-local editor value
+  const [startMs, setStartMs] = useState(0); // staged start (committed on Update)
   const [viewOpen, setViewOpen] = useState(false);
 
   // Reset form whenever a different appointment is opened.
@@ -92,6 +93,7 @@ export function AppointmentDialog({
       setSearchOpen(false);
       setRescheduling(false);
       setStartStr(format(appointment.startsAt, "yyyy-MM-dd'T'HH:mm"));
+      setStartMs(appointment.startsAt.getTime());
       setViewOpen(false);
     }
   }, [appointment]);
@@ -123,15 +125,24 @@ export function AppointmentDialog({
   // Cross: discard and keep the previous customer.
   const cancelChange = () => setChanging(false);
 
+  const rescheduleInvalid = Number.isNaN(new Date(startStr).getTime());
+  const startReschedule = () => {
+    setStartStr(format(new Date(startMs), "yyyy-MM-dd'T'HH:mm"));
+    setRescheduling(true);
+  };
+  // Tick: stage the new time (persisted only on Update).
+  const confirmReschedule = () => {
+    if (rescheduleInvalid) return;
+    setStartMs(new Date(startStr).getTime());
+    setRescheduling(false);
+  };
+  // Cross: discard and keep the previous time.
+  const cancelReschedule = () => setRescheduling(false);
+
   const save = () => {
-    const newStartMs = new Date(startStr).getTime();
-    if (rescheduling && Number.isNaN(newStartMs)) {
-      toast.error("Pick a valid date and time");
-      return;
-    }
     startTransition(async () => {
-      if (rescheduling && newStartMs !== appointment.startsAt.getTime()) {
-        await rescheduleAppointment(appointment.id, newStartMs);
+      if (startMs !== appointment.startsAt.getTime()) {
+        await rescheduleAppointment(appointment.id, startMs);
       }
       await updateAppointment(appointment.id, {
         notes,
@@ -287,31 +298,53 @@ export function AppointmentDialog({
           )}
 
           {/* Time */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-2">
-                <Label className="font-bold">Time:</Label>
-                <span className="truncate text-muted-foreground">
-                  {format(appointment.startsAt, "h:mmaaa, EEEE (d MMMM)")}
-                </span>
-              </div>
-              <Button
-                variant="outline"
-                className={cn(smallBtn, "shrink-0")}
-                onClick={() => setRescheduling((v) => !v)}
-                aria-pressed={rescheduling}
-              >
-                <CalendarClock className="size-3.5" />
-                Reschedule
-              </Button>
-            </div>
-            {rescheduling && (
-              <Input
-                type="datetime-local"
-                value={startStr}
-                onChange={(e) => setStartStr(e.target.value)}
-                className="w-full"
-              />
+          <div className="flex items-center gap-2">
+            {rescheduling ? (
+              <>
+                <Input
+                  type="datetime-local"
+                  value={startStr}
+                  onChange={(e) => setStartStr(e.target.value)}
+                  className="flex-1"
+                  autoFocus
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-7 shrink-0 text-green-600"
+                  aria-label="Confirm reschedule"
+                  onClick={confirmReschedule}
+                  disabled={rescheduleInvalid}
+                >
+                  <Check className="size-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-7 shrink-0 text-rose-600"
+                  aria-label="Cancel reschedule"
+                  onClick={cancelReschedule}
+                >
+                  <X className="size-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <Label className="font-bold">Time:</Label>
+                  <span className="truncate text-muted-foreground">
+                    {format(new Date(startMs), "h:mmaaa, EEEE (d MMMM)")}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  className={cn(smallBtn, "shrink-0")}
+                  onClick={startReschedule}
+                >
+                  <CalendarClock className="size-3.5" />
+                  Reschedule
+                </Button>
+              </>
             )}
           </div>
 
@@ -389,7 +422,7 @@ export function AppointmentDialog({
           <Button variant="outline" onClick={onClose} disabled={pending}>
             Close
           </Button>
-          <Button onClick={save} disabled={pending || changing}>
+          <Button onClick={save} disabled={pending || changing || rescheduling}>
             Update
           </Button>
         </DialogFooter>
