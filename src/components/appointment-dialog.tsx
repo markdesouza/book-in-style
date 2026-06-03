@@ -3,7 +3,15 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Check, Mail, Phone, X } from "lucide-react";
+import {
+  ArrowRightLeft,
+  CalendarClock,
+  Check,
+  Eye,
+  Mail,
+  Phone,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -222,6 +230,7 @@ export function AppointmentDialog({
                     className={smallBtn}
                     onClick={() => setViewOpen(true)}
                   >
+                    <Eye className="size-3.5" />
                     View
                   </Button>
                   <Button
@@ -229,7 +238,8 @@ export function AppointmentDialog({
                     className={smallBtn}
                     onClick={startChange}
                   >
-                    Change
+                    <ArrowRightLeft className="size-3.5" />
+                    Reassign
                   </Button>
                 </div>
               </div>
@@ -291,6 +301,7 @@ export function AppointmentDialog({
                 onClick={() => setRescheduling((v) => !v)}
                 aria-pressed={rescheduling}
               >
+                <CalendarClock className="size-3.5" />
                 Reschedule
               </Button>
             </div>
