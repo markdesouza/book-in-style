@@ -8,6 +8,9 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
  */
 export const customers = sqliteTable("customers", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  firstName: text("first_name").notNull().default(""),
+  lastName: text("last_name").notNull().default(""),
+  /** Denormalised display name ("First Last"); kept in sync by the actions. */
   name: text("name").notNull(),
   phone: text("phone"),
   email: text("email"),

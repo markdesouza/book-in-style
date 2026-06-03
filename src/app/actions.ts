@@ -25,21 +25,29 @@ async function customerName(id: number) {
 // ---------------------------------------------------------------- Customers
 
 export async function createCustomer(input: {
-  name: string;
+  firstName: string;
+  lastName?: string;
   phone?: string;
   email?: string;
   defaultLengthMin?: number;
   birthday?: string;
+  usualGap?: string;
 }) {
-  if (!input.name.trim()) throw new Error("Name is required");
+  const firstName = input.firstName.trim();
+  const lastName = (input.lastName ?? "").trim();
+  const name = `${firstName} ${lastName}`.trim();
+  if (!name) throw new Error("Name is required");
   const [row] = await db
     .insert(customers)
     .values({
-      name: input.name.trim(),
+      firstName,
+      lastName,
+      name,
       phone: input.phone?.trim() || null,
       email: input.email?.trim() || null,
       defaultLengthMin: clampLength(input.defaultLengthMin ?? 30),
       birthday: input.birthday || null,
+      usualGap: input.usualGap || null,
     })
     .returning();
   revalidatePath("/");
@@ -49,7 +57,8 @@ export async function createCustomer(input: {
 export async function updateCustomer(
   id: number,
   input: {
-    name: string;
+    firstName: string;
+    lastName?: string;
     phone?: string;
     email?: string;
     defaultLengthMin?: number;
@@ -57,10 +66,14 @@ export async function updateCustomer(
     usualGap?: string;
   },
 ) {
+  const firstName = input.firstName.trim();
+  const lastName = (input.lastName ?? "").trim();
   await db
     .update(customers)
     .set({
-      name: input.name.trim(),
+      firstName,
+      lastName,
+      name: `${firstName} ${lastName}`.trim(),
       phone: input.phone?.trim() || null,
       email: input.email?.trim() || null,
       defaultLengthMin: clampLength(input.defaultLengthMin ?? 30),

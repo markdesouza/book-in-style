@@ -74,9 +74,8 @@ export function CustomerDialog({
 
   useEffect(() => {
     if (customer) {
-      const parts = customer.name.trim().split(/\s+/);
-      setFirstName(parts[0] ?? "");
-      setLastName(parts.slice(1).join(" "));
+      setFirstName(customer.firstName);
+      setLastName(customer.lastName);
       setPhone(customer.phone ?? "");
       setEmail(customer.email ?? "");
       // Birthday is stored "YYYY-MM-DD"; only the day & month are shown.
@@ -91,8 +90,7 @@ export function CustomerDialog({
   if (!customer) return null;
 
   const save = () => {
-    const name = `${firstName.trim()} ${lastName.trim()}`.trim();
-    if (!name) {
+    if (!firstName.trim() && !lastName.trim()) {
       toast.error("Name is required");
       return;
     }
@@ -103,7 +101,8 @@ export function CustomerDialog({
         : "";
     startTransition(async () => {
       await updateCustomer(customer.id, {
-        name,
+        firstName,
+        lastName,
         phone,
         email,
         birthday,
