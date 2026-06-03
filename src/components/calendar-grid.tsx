@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, isSameDay } from "date-fns";
 import { MoveHorizontal } from "lucide-react";
@@ -63,6 +63,36 @@ export function CalendarGrid({
   // background; this flag swallows that one click so it doesn't open the
   // "new appointment" dialog.
   const suppressColumnClickRef = useRef(false);
+  // Optimistic positions (appointment id -> new start, epoch ms) applied
+  // immediately on drop so the card doesn't flash back to its old spot while
+  // the server round-trip + refresh are in flight.
+  const [optimistic, setOptimistic] = useState<Map<number, number>>(new Map());
+
+  // Drop an optimistic override once the refreshed server data agrees with it.
+  useEffect(() => {
+    setOptimistic((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Map(prev);
+      let changed = false;
+      for (const a of appointments) {
+        if (next.get(a.id) === a.startsAt.getTime()) {
+          next.delete(a.id);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [appointments]);
+
+  // Appointments with any optimistic positions applied.
+  const effectiveAppointments =
+    optimistic.size === 0
+      ? appointments
+      : appointments.map((a) =>
+          optimistic.has(a.id)
+            ? { ...a, startsAt: new Date(optimistic.get(a.id)!) }
+            : a,
+        );
 
   function pointerToGrid(e: PointerEvent | React.PointerEvent) {
     const cols = columnsRef.current!;
@@ -134,17 +164,34 @@ export function CalendarGrid({
       const minutes = snapMinutes((yInContent - grabOffsetY) / PX_PER_MIN);
       const targetDay = days[dayIndex];
       const newStart = dateFromDayOffset(targetDay, minutes);
+
+      if (newStart.getTime() === appt.startsAt.getTime()) {
+        setDrag(null);
+        return;
+      }
+
+      // Pin the card to its new position immediately, then persist. The
+      // optimistic entry is cleared by the effect once the server agrees.
+      const newStartMs = newStart.getTime();
+      setOptimistic((prev) => new Map(prev).set(appt.id, newStartMs));
       setDrag(null);
 
-      if (newStart.getTime() === appt.startsAt.getTime()) return;
-      void rescheduleAppointment(appt.id, newStart.getTime())
+      void rescheduleAppointment(appt.id, newStartMs)
         .then(() => {
           toast.success(
             `Moved ${appt.customer.name} to ${format(newStart, "EEE h:mmaaa")}`,
           );
           router.refresh();
         })
-        .catch(() => toast.error("Could not move appointment"));
+        .catch(() => {
+          // Roll back the optimistic move on failure.
+          setOptimistic((prev) => {
+            const next = new Map(prev);
+            next.delete(appt.id);
+            return next;
+          });
+          toast.error("Could not move appointment");
+        });
     };
 
     window.addEventListener("pointermove", onMove);
@@ -199,7 +246,7 @@ export function CalendarGrid({
         <div ref={columnsRef} className="flex flex-1">
           {days.map((day, dayIndex) => {
             const isToday = isSameDay(day, now);
-            const dayAppts = appointments
+            const dayAppts = effectiveAppointments
               .filter((a) => isSameDay(a.startsAt, day))
               .filter((a) => showCancelled || a.status !== "cancelled");
 
@@ -349,7 +396,7 @@ export function CalendarGrid({
           drag={drag}
           columnsEl={columnsRef.current}
           days={days}
-          appointments={appointments}
+          appointments={effectiveAppointments}
           showCancelled={showCancelled}
         />
       )}
