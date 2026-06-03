@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Mail, Phone } from "lucide-react";
+import { Check, Mail, Phone, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -23,10 +24,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CustomerDialog } from "@/components/customer-dialog";
 import { cn } from "@/lib/utils";
 import { LENGTH_OPTIONS, type AppointmentWithCustomer } from "@/lib/salon";
-import { APPOINTMENT_STATUSES, type AppointmentStatus } from "@/db/schema";
-import { updateAppointment } from "@/app/actions";
+import {
+  APPOINTMENT_STATUSES,
+  type AppointmentStatus,
+  type Customer,
+} from "@/db/schema";
+import { rescheduleAppointment, updateAppointment } from "@/app/actions";
 
 /**
  * Highlight background for the active status button (text stays black).
@@ -38,11 +44,17 @@ const STATUS_ACTIVE: Record<AppointmentStatus, string> = {
   confirmed: "bg-green-100 dark:bg-green-500/20",
 };
 
+const smallBtn = "h-7 px-2 text-xs";
+const contactLink =
+  "flex w-fit items-center gap-1.5 text-muted-foreground outline-none hover:text-foreground hover:underline";
+
 export function AppointmentDialog({
   appointment,
+  customers,
   onClose,
 }: {
   appointment: AppointmentWithCustomer | null;
+  customers: Customer[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -50,6 +62,14 @@ export function AppointmentDialog({
   const [notes, setNotes] = useState("");
   const [lengthMin, setLengthMin] = useState(30);
   const [status, setStatus] = useState<AppointmentStatus>("unconfirmed");
+  const [customerId, setCustomerId] = useState(0);
+  const [changing, setChanging] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [draftCustomerId, setDraftCustomerId] = useState<number | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
+  const [startStr, setStartStr] = useState("");
+  const [viewOpen, setViewOpen] = useState(false);
 
   // Reset form whenever a different appointment is opened.
   useEffect(() => {
@@ -57,15 +77,60 @@ export function AppointmentDialog({
       setNotes(appointment.notes ?? "");
       setLengthMin(appointment.lengthMin);
       setStatus(appointment.status);
+      setCustomerId(appointment.customerId);
+      setChanging(false);
+      setCustomerSearch("");
+      setDraftCustomerId(null);
+      setSearchOpen(false);
+      setRescheduling(false);
+      setStartStr(format(appointment.startsAt, "yyyy-MM-dd'T'HH:mm"));
+      setViewOpen(false);
     }
   }, [appointment]);
 
   if (!appointment) return null;
-  const c = appointment.customer;
+  const customer =
+    customers.find((x) => x.id === customerId) ?? appointment.customer;
+
+  const filteredCustomers = customers.filter((x) =>
+    x.name.toLowerCase().includes(customerSearch.trim().toLowerCase()),
+  );
+  // The customer currently selected in the autocomplete (staged, not committed).
+  const previewCustomer =
+    draftCustomerId != null
+      ? customers.find((x) => x.id === draftCustomerId)
+      : undefined;
+
+  const startChange = () => {
+    setChanging(true);
+    setCustomerSearch("");
+    setDraftCustomerId(null);
+    setSearchOpen(true);
+  };
+  // Tick: stage the chosen customer (persisted only on Update).
+  const confirmChange = () => {
+    if (draftCustomerId != null) setCustomerId(draftCustomerId);
+    setChanging(false);
+  };
+  // Cross: discard and keep the previous customer.
+  const cancelChange = () => setChanging(false);
 
   const save = () => {
+    const newStartMs = new Date(startStr).getTime();
+    if (rescheduling && Number.isNaN(newStartMs)) {
+      toast.error("Pick a valid date and time");
+      return;
+    }
     startTransition(async () => {
-      await updateAppointment(appointment.id, { notes, lengthMin, status });
+      if (rescheduling && newStartMs !== appointment.startsAt.getTime()) {
+        await rescheduleAppointment(appointment.id, newStartMs);
+      }
+      await updateAppointment(appointment.id, {
+        notes,
+        lengthMin,
+        status,
+        customerId,
+      });
       toast.success("Appointment updated");
       router.refresh();
       onClose();
@@ -73,36 +138,134 @@ export function AppointmentDialog({
   };
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <>
+      <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader className="-mx-4 -mt-4 rounded-t-xl border-b bg-muted/50 p-4">
+        <DialogHeader className="-mx-4 -mt-4 rounded-t-xl border-b bg-muted/50 px-4 py-[0.8rem]">
           <DialogTitle className="font-bold">Appointment details</DialogTitle>
           <DialogDescription className="sr-only">
-            Edit the appointment&rsquo;s status, duration and notes.
+            Edit the appointment&rsquo;s status, duration, time and customer.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-1 text-sm">
+        <div className="-mt-2.5 space-y-4 py-1 text-sm">
           {/* Customer */}
           <div className="space-y-1">
-            <p className="font-bold text-foreground">{c.name}</p>
-            {c.phone && (
-              <a
-                href={`tel:${c.phone.replace(/\s+/g, "")}`}
-                className="flex w-fit items-center gap-1.5 text-muted-foreground hover:text-foreground hover:underline"
-              >
-                <Phone className="size-3.5" />
-                {c.phone}
-              </a>
+            {changing ? (
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    autoFocus
+                    placeholder="Search customer…"
+                    value={customerSearch}
+                    onChange={(e) => {
+                      setCustomerSearch(e.target.value);
+                      setDraftCustomerId(null);
+                      setSearchOpen(true);
+                    }}
+                    onFocus={() => setSearchOpen(true)}
+                    onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+                  />
+                  {searchOpen && filteredCustomers.length > 0 && (
+                    <ul className="absolute z-50 mt-1 max-h-44 w-full overflow-auto rounded-md border bg-popover py-1 shadow-md ring-1 ring-foreground/10">
+                      {filteredCustomers.map((x) => (
+                        <li key={x.id}>
+                          <button
+                            type="button"
+                            // Keep the input focused so onBlur doesn't pre-empt this click.
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setDraftCustomerId(x.id);
+                              setCustomerSearch(x.name);
+                              setSearchOpen(false);
+                            }}
+                            className={cn(
+                              "w-full px-2 py-1.5 text-left text-sm hover:bg-accent",
+                              draftCustomerId === x.id && "bg-accent",
+                            )}
+                          >
+                            {x.name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-7 shrink-0 text-green-600"
+                  aria-label="Confirm customer change"
+                  onClick={confirmChange}
+                  disabled={draftCustomerId == null}
+                >
+                  <Check className="size-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-7 shrink-0 text-rose-600"
+                  aria-label="Cancel customer change"
+                  onClick={cancelChange}
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-2">
+                <p className="truncate font-bold text-foreground">
+                  {customer.name}
+                </p>
+                <div className="flex shrink-0 gap-1">
+                  <Button
+                    variant="outline"
+                    className={smallBtn}
+                    onClick={() => setViewOpen(true)}
+                  >
+                    View
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className={smallBtn}
+                    onClick={startChange}
+                  >
+                    Change
+                  </Button>
+                </div>
+              </div>
             )}
-            {c.email && (
-              <a
-                href={`mailto:${c.email}`}
-                className="flex w-fit items-center gap-1.5 text-muted-foreground hover:text-foreground hover:underline"
-              >
-                <Mail className="size-3.5" />
-                {c.email}
-              </a>
+
+            {/* While changing, keep the icons; show the selected customer's
+                details, or masked placeholders until one is chosen. */}
+            {changing ? (
+              <>
+                <div className="flex w-fit items-center gap-1.5 text-muted-foreground">
+                  <Phone className="size-3.5" />
+                  {previewCustomer?.phone || "---- --- ---"}
+                </div>
+                <div className="flex w-fit items-center gap-1.5 text-muted-foreground">
+                  <Mail className="size-3.5" />
+                  {previewCustomer?.email || "-------@-------.com"}
+                </div>
+              </>
+            ) : (
+              <>
+                {customer.phone && (
+                  <a
+                    href={`tel:${customer.phone.replace(/\s+/g, "")}`}
+                    className={contactLink}
+                  >
+                    <Phone className="size-3.5" />
+                    {customer.phone}
+                  </a>
+                )}
+                {customer.email && (
+                  <a href={`mailto:${customer.email}`} className={contactLink}>
+                    <Mail className="size-3.5" />
+                    {customer.email}
+                  </a>
+                )}
+              </>
             )}
           </div>
 
@@ -114,11 +277,31 @@ export function AppointmentDialog({
           )}
 
           {/* Time */}
-          <div className="flex items-center gap-2">
-            <Label className="font-bold">Time:</Label>
-            <span className="text-muted-foreground">
-              {format(appointment.startsAt, "h:mmaaa, EEEE (d MMMM)")}
-            </span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <Label className="font-bold">Time:</Label>
+                <span className="truncate text-muted-foreground">
+                  {format(appointment.startsAt, "h:mmaaa, EEEE (d MMMM)")}
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                className={cn(smallBtn, "shrink-0")}
+                onClick={() => setRescheduling((v) => !v)}
+                aria-pressed={rescheduling}
+              >
+                Reschedule
+              </Button>
+            </div>
+            {rescheduling && (
+              <Input
+                type="datetime-local"
+                value={startStr}
+                onChange={(e) => setStartStr(e.target.value)}
+                className="w-full"
+              />
+            )}
           </div>
 
           {/* Duration */}
@@ -191,15 +374,21 @@ export function AppointmentDialog({
           </div>
         </div>
 
-        <DialogFooter className="sm:justify-between">
+        <DialogFooter className="py-[0.8rem] sm:justify-between">
           <Button variant="outline" onClick={onClose} disabled={pending}>
             Close
           </Button>
-          <Button onClick={save} disabled={pending}>
+          <Button onClick={save} disabled={pending || changing}>
             Update
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+
+      <CustomerDialog
+        customer={viewOpen ? customer : null}
+        onClose={() => setViewOpen(false)}
+      />
+    </>
   );
 }
