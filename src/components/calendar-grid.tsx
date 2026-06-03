@@ -178,7 +178,7 @@ export function CalendarGrid({
             {hourMarks().map((m) => (
               <div
                 key={m.hour}
-                className="absolute right-1 -translate-y-1/2 text-[10px] text-muted-foreground sm:text-xs"
+                className="absolute right-2.5 -translate-y-1/2 text-[10px] text-muted-foreground sm:text-xs"
                 style={{ top: m.top }}
               >
                 {format(new Date().setHours(m.hour, 0), "ha")}
