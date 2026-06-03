@@ -400,7 +400,7 @@ export function AppointmentDialog({
           <Button variant="outline" onClick={onClose} disabled={pending}>
             Close
           </Button>
-          <Button onClick={save} disabled={pending}>
+          <Button onClick={save} disabled={pending || changing}>
             Update
           </Button>
         </DialogFooter>
