@@ -72,39 +72,41 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
 
   return (
     <div className="flex h-dvh flex-col bg-background">
-      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-3">
+      <header className="grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-2 border-b px-4 py-3 sm:gap-4">
         <div className="flex items-center gap-2 font-semibold">
           <Scissors className="size-5 text-primary" />
           <span className="hidden sm:inline">Book in Style</span>
         </div>
 
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigate(-step)}
-            aria-label="Previous"
-          >
-            <ChevronLeft className="size-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={goToday}>
-            Today
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigate(step)}
-            aria-label="Next"
-          >
-            <ChevronRight className="size-4" />
-          </Button>
+        {/* Centred date navigation + current range */}
+        <div className="flex min-w-0 items-center justify-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate(-step)}
+              aria-label="Previous"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={goToday}>
+              Today
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate(step)}
+              aria-label="Next"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+          <div className="truncate text-sm font-medium text-muted-foreground">
+            {rangeLabel}
+          </div>
         </div>
 
-        <div className="min-w-0 flex-1 truncate text-sm font-medium text-muted-foreground">
-          {rangeLabel}
-        </div>
-
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-end gap-3">
           <Button
             variant={showCancelled ? "secondary" : "outline"}
             size="icon"
