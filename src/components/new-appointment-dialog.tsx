@@ -48,7 +48,8 @@ export function NewAppointmentDialog({
   const [customerId, setCustomerId] = useState<string>("");
 
   // New-customer fields
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [birthday, setBirthday] = useState("");
@@ -59,7 +60,8 @@ export function NewAppointmentDialog({
       setTab(customers.length ? "existing" : "new");
       setCustomerId("");
       setNotes("");
-      setName("");
+      setFirstName("");
+      setLastName("");
       setPhone("");
       setEmail("");
       setBirthday("");
@@ -85,12 +87,13 @@ export function NewAppointmentDialog({
       try {
         let cid: number;
         if (tab === "new") {
-          if (!name.trim()) {
+          if (!firstName.trim() && !lastName.trim()) {
             toast.error("Customer name is required");
             return;
           }
           const created = await createCustomer({
-            name,
+            firstName,
+            lastName,
             phone,
             email,
             birthday,
@@ -161,14 +164,25 @@ export function NewAppointmentDialog({
             </TabsContent>
 
             <TabsContent value="new" className="space-y-3 pt-1">
-              <div className="grid gap-2">
-                <Label htmlFor="c-name">Name</Label>
-                <Input
-                  id="c-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Jane Smith"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-2">
+                  <Label htmlFor="c-first">First name</Label>
+                  <Input
+                    id="c-first"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Jane"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="c-last">Last name</Label>
+                  <Input
+                    id="c-last"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Smith"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-2">
