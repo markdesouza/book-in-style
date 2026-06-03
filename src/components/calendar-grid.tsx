@@ -94,6 +94,14 @@ export function CalendarGrid({
             : a,
         );
 
+  // Current time for the "now" indicator. Tick it on an interval so the line
+  // advances on its own, without needing a re-render from user interaction.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
   function pointerToGrid(e: PointerEvent | React.PointerEvent) {
     const cols = columnsRef.current!;
     const rect = cols.getBoundingClientRect();
@@ -211,8 +219,7 @@ export function CalendarGrid({
     onCreateAt(day, dateFromDayOffset(day, minutes));
   }
 
-  const now = new Date();
-  const nowTop = (minutesFromDayStart(now)) * PX_PER_MIN;
+  const nowTop = minutesFromDayStart(now) * PX_PER_MIN;
   const nowVisible = showNow && nowTop >= 0 && nowTop <= DAY_HEIGHT_PX;
 
   return (
