@@ -117,7 +117,9 @@ export function CalendarGrid({
     appt: AppointmentWithCustomer,
     blockTop: number,
   ) {
-    if (appt.status === "cancelled") return; // don't drag cancelled
+    // Cancelled appointments can't be dragged, but must still be clickable to
+    // open their details (e.g. to un-cancel them).
+    const draggable = appt.status !== "cancelled";
     movedRef.current = false;
     startPtRef.current = { x: e.clientX, y: e.clientY };
     const { yInContent } = pointerToGrid(e);
@@ -134,6 +136,7 @@ export function CalendarGrid({
     };
 
     const onMove = (ev: PointerEvent) => {
+      if (!draggable) return; // no drag for cancelled; release stays a click
       const start = startPtRef.current!;
       // Ignore small jitters: only treat it as a drag once the pointer has
       // clearly moved. Until then we show no drag visual, so a click stays a
