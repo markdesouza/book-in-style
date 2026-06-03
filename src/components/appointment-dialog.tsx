@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { format, isValid, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { Check, Mail, Phone, X } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -24,11 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { CustomerDialog } from "@/components/customer-dialog";
 import { cn } from "@/lib/utils";
 import { LENGTH_OPTIONS, type AppointmentWithCustomer } from "@/lib/salon";
 import {
@@ -73,6 +69,7 @@ export function AppointmentDialog({
   const [searchOpen, setSearchOpen] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
   const [startStr, setStartStr] = useState("");
+  const [viewOpen, setViewOpen] = useState(false);
 
   // Reset form whenever a different appointment is opened.
   useEffect(() => {
@@ -87,6 +84,7 @@ export function AppointmentDialog({
       setSearchOpen(false);
       setRescheduling(false);
       setStartStr(format(appointment.startsAt, "yyyy-MM-dd'T'HH:mm"));
+      setViewOpen(false);
     }
   }, [appointment]);
 
@@ -139,13 +137,9 @@ export function AppointmentDialog({
     });
   };
 
-  const birthday =
-    customer.birthday && isValid(parseISO(customer.birthday))
-      ? format(parseISO(customer.birthday), "d MMM yyyy")
-      : "—";
-
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <>
+      <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="-mx-4 -mt-4 rounded-t-xl border-b bg-muted/50 px-4 py-[0.8rem]">
           <DialogTitle className="font-bold">Appointment details</DialogTitle>
@@ -223,29 +217,13 @@ export function AppointmentDialog({
                   {customer.name}
                 </p>
                 <div className="flex shrink-0 gap-1">
-                  <Popover>
-                    <PopoverTrigger
-                      className={cn(
-                        "inline-flex items-center rounded-md border bg-background font-medium outline-none hover:bg-accent",
-                        smallBtn,
-                      )}
-                    >
-                      View
-                    </PopoverTrigger>
-                    <PopoverContent align="end" className="w-64">
-                      <p className="font-semibold">{customer.name}</p>
-                      <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                        <dt className="font-medium text-foreground">Phone</dt>
-                        <dd>{customer.phone || "—"}</dd>
-                        <dt className="font-medium text-foreground">Email</dt>
-                        <dd className="truncate">{customer.email || "—"}</dd>
-                        <dt className="font-medium text-foreground">Birthday</dt>
-                        <dd>{birthday}</dd>
-                        <dt className="font-medium text-foreground">Usual</dt>
-                        <dd>{customer.defaultLengthMin} min</dd>
-                      </dl>
-                    </PopoverContent>
-                  </Popover>
+                  <Button
+                    variant="outline"
+                    className={smallBtn}
+                    onClick={() => setViewOpen(true)}
+                  >
+                    View
+                  </Button>
                   <Button
                     variant="outline"
                     className={smallBtn}
@@ -405,6 +383,12 @@ export function AppointmentDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+
+      <CustomerDialog
+        customer={viewOpen ? customer : null}
+        onClose={() => setViewOpen(false)}
+      />
+    </>
   );
 }
