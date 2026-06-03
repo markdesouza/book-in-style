@@ -178,12 +178,20 @@ export function CalendarGrid({
             {hourMarks().map((m) => (
               <div
                 key={m.hour}
-                className="absolute right-1 -translate-y-1/2 text-[10px] text-muted-foreground sm:text-xs"
+                className="absolute right-2.5 -translate-y-1/2 text-[10px] text-muted-foreground sm:text-xs"
                 style={{ top: m.top }}
               >
                 {format(new Date().setHours(m.hour, 0), "ha")}
               </div>
             ))}
+            {/* current-time dot, centred on the gutter / grid divider line.
+                +1px aligns the dot's centre with the 2px line's centre. */}
+            {nowVisible && (
+              <div
+                className="pointer-events-none absolute right-0 size-2.5 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-500"
+                style={{ top: nowTop + 1 }}
+              />
+            )}
           </div>
         </div>
 
@@ -264,14 +272,14 @@ export function CalendarGrid({
                     />
                   ))}
 
-                  {/* now indicator */}
-                  {nowVisible && isToday && (
+                  {/* now indicator — the line spans every day and sits *under*
+                      the appointment cards; the dot lives in the gutter, on the
+                      divider line */}
+                  {nowVisible && (
                     <div
-                      className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-red-500"
+                      className="pointer-events-none absolute inset-x-0 border-t-2 border-red-500"
                       style={{ top: nowTop }}
-                    >
-                      <div className="absolute -left-1 -top-1 size-2 rounded-full bg-red-500" />
-                    </div>
+                    />
                   )}
 
                   {/* appointments */}
