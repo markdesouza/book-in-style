@@ -246,7 +246,13 @@ export function CustomerDialog({
               >
                 <SelectTrigger className="w-24" aria-label="Birthday month">
                   <SelectValue placeholder="Month">
-                    {(v: string) => (v === "-" ? "-" : MONTHS[Number(v) - 1])}
+                    {(v: string) =>
+                      v ? (
+                        MONTHS[Number(v) - 1]
+                      ) : (
+                        <span className="text-muted-foreground">Month</span>
+                      )
+                    }
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
