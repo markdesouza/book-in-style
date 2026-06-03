@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { LENGTH_OPTIONS } from "@/lib/salon";
 import type { Customer } from "@/db/schema";
 import { updateCustomer } from "@/app/actions";
@@ -150,9 +151,19 @@ export function CustomerDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="cust-last" className="font-bold">
-                Last name
-              </Label>
+              <div className="flex items-baseline gap-2">
+                <Label
+                  htmlFor="cust-last"
+                  className={cn("font-bold", !lastNameValid && "text-destructive")}
+                >
+                  Last name
+                </Label>
+                {!lastNameValid && (
+                  <span className="text-xs font-normal text-destructive">
+                    required
+                  </span>
+                )}
+              </div>
               <Input
                 id="cust-last"
                 value={lastName}
@@ -160,16 +171,23 @@ export function CustomerDialog({
                 placeholder="Smith"
                 aria-invalid={!lastNameValid}
               />
-              {!lastNameValid && (
-                <p className="text-xs text-destructive">Last name is required</p>
-              )}
             </div>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="cust-phone" className="font-bold">
-              Mobile
-            </Label>
+            <div className="flex items-baseline gap-2">
+              <Label
+                htmlFor="cust-phone"
+                className={cn("font-bold", !phoneValid && "text-destructive")}
+              >
+                Mobile
+              </Label>
+              {!phoneValid && (
+                <span className="text-xs font-normal text-destructive">
+                  valid Australian mobile required
+                </span>
+              )}
+            </div>
             <Input
               id="cust-phone"
               value={phone}
@@ -177,17 +195,22 @@ export function CustomerDialog({
               placeholder="0412 345 678"
               aria-invalid={!phoneValid}
             />
-            {!phoneValid && (
-              <p className="text-xs text-destructive">
-                Enter a valid Australian mobile (e.g. 0412 345 678)
-              </p>
-            )}
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="cust-email" className="font-bold">
-              Email
-            </Label>
+            <div className="flex items-baseline gap-2">
+              <Label
+                htmlFor="cust-email"
+                className={cn("font-bold", !emailValid && "text-destructive")}
+              >
+                Email
+              </Label>
+              {!emailValid && (
+                <span className="text-xs font-normal text-destructive">
+                  invalid email
+                </span>
+              )}
+            </div>
             <Input
               id="cust-email"
               type="email"
@@ -196,15 +219,19 @@ export function CustomerDialog({
               placeholder="jane@example.com"
               aria-invalid={!emailValid}
             />
-            {!emailValid && (
-              <p className="text-xs text-destructive">
-                Enter a valid email address
-              </p>
-            )}
           </div>
 
           <div className="grid gap-2">
-            <Label className="font-bold">Birthday</Label>
+            <div className="flex items-baseline gap-2">
+              <Label className={cn("font-bold", !birthdayValid && "text-destructive")}>
+                Birthday
+              </Label>
+              {!birthdayValid && (
+                <span className="text-xs font-normal text-destructive">
+                  invalid date
+                </span>
+              )}
+            </div>
             <div className="flex gap-2">
               <Select value={birthDay} onValueChange={(v) => v && setBirthDay(v)}>
                 <SelectTrigger className="w-20" aria-label="Birthday day">
@@ -236,11 +263,6 @@ export function CustomerDialog({
                 </SelectContent>
               </Select>
             </div>
-            {!birthdayValid && (
-              <p className="text-xs text-destructive">
-                Pick a valid day and month
-              </p>
-            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
