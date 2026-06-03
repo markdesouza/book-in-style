@@ -184,6 +184,13 @@ export function CalendarGrid({
                 {format(new Date().setHours(m.hour, 0), "ha")}
               </div>
             ))}
+            {/* current-time dot, centred on the gutter / grid divider line */}
+            {nowVisible && (
+              <div
+                className="pointer-events-none absolute right-0 size-2.5 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-500"
+                style={{ top: nowTop }}
+              />
+            )}
           </div>
         </div>
 
@@ -265,17 +272,13 @@ export function CalendarGrid({
                   ))}
 
                   {/* now indicator — the line spans every day and sits *under*
-                      the appointment cards; the dot sits at the far left, by
-                      the time labels */}
+                      the appointment cards; the dot lives in the gutter, on the
+                      divider line */}
                   {nowVisible && (
                     <div
                       className="pointer-events-none absolute inset-x-0 border-t-2 border-red-500"
                       style={{ top: nowTop }}
-                    >
-                      {dayIndex === 0 && (
-                        <div className="absolute left-0 size-2.5 -translate-y-1/2 rounded-full bg-red-500" />
-                      )}
-                    </div>
+                    />
                   )}
 
                   {/* appointments */}
