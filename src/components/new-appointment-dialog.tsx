@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { LENGTH_OPTIONS } from "@/lib/salon";
 import type { Customer } from "@/db/schema";
 import { createAppointment, createCustomer } from "@/app/actions";
@@ -46,6 +47,8 @@ export function NewAppointmentDialog({
   const [lengthMin, setLengthMin] = useState(30);
   const [notes, setNotes] = useState("");
   const [customerId, setCustomerId] = useState<string>("");
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // New-customer fields
   const [firstName, setFirstName] = useState("");
@@ -59,6 +62,8 @@ export function NewAppointmentDialog({
       setStartStr(format(defaultStart, "yyyy-MM-dd'T'HH:mm"));
       setTab(customers.length ? "existing" : "new");
       setCustomerId("");
+      setCustomerSearch("");
+      setSearchOpen(false);
       setNotes("");
       setFirstName("");
       setLastName("");
@@ -69,11 +74,14 @@ export function NewAppointmentDialog({
     }
   }, [open, defaultStart, customers.length]);
 
-  const onPickCustomer = (id: string | null) => {
-    if (!id) return;
-    setCustomerId(id);
-    const c = customers.find((x) => String(x.id) === id);
-    if (c) setLengthMin(c.defaultLengthMin);
+  const filteredCustomers = customers.filter((x) =>
+    x.name.toLowerCase().includes(customerSearch.trim().toLowerCase()),
+  );
+  const pickCustomer = (c: Customer) => {
+    setCustomerId(String(c.id));
+    setCustomerSearch(c.name);
+    setLengthMin(c.defaultLengthMin); // default the duration to the usual one
+    setSearchOpen(false);
   };
 
   const submit = () => {
@@ -141,25 +149,41 @@ export function NewAppointmentDialog({
 
             <TabsContent value="existing" className="pt-1">
               <div className="grid gap-2">
-                <Label>Customer</Label>
-                <Select value={customerId} onValueChange={onPickCustomer}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a customer">
-                      {(value: string | null) =>
-                        value
-                          ? customers.find((c) => String(c.id) === value)?.name
-                          : "Choose a customer"
-                      }
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="cust-search">Customer</Label>
+                <div className="relative">
+                  <Input
+                    id="cust-search"
+                    placeholder="Search customer…"
+                    value={customerSearch}
+                    onChange={(e) => {
+                      setCustomerSearch(e.target.value);
+                      setCustomerId("");
+                      setSearchOpen(true);
+                    }}
+                    onFocus={() => setSearchOpen(true)}
+                    onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+                  />
+                  {searchOpen && filteredCustomers.length > 0 && (
+                    <ul className="absolute z-50 mt-1 max-h-44 w-full overflow-auto rounded-md border bg-popover py-1 shadow-md ring-1 ring-foreground/10">
+                      {filteredCustomers.map((c) => (
+                        <li key={c.id}>
+                          <button
+                            type="button"
+                            // Keep focus so onBlur doesn't pre-empt the click.
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => pickCustomer(c)}
+                            className={cn(
+                              "w-full px-2 py-1.5 text-left text-sm hover:bg-accent",
+                              String(c.id) === customerId && "bg-accent",
+                            )}
+                          >
+                            {c.name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             </TabsContent>
 
@@ -228,7 +252,7 @@ export function NewAppointmentDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="a-length">Length</Label>
+              <Label htmlFor="a-length">Duration</Label>
               <Select
                 value={String(lengthMin)}
                 onValueChange={(v) => setLengthMin(Number(v))}
@@ -259,12 +283,12 @@ export function NewAppointmentDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="sm:justify-between">
           <Button variant="ghost" onClick={onClose} disabled={pending}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={pending}>
-            Book appointment
+            Create
           </Button>
         </DialogFooter>
       </DialogContent>
