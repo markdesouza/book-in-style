@@ -203,6 +203,7 @@ export function AppointmentDialog({
                   className="size-7 shrink-0 text-green-600"
                   aria-label="Confirm customer change"
                   onClick={confirmChange}
+                  disabled={draftCustomerId == null}
                 >
                   <Check className="size-4" />
                 </Button>
