@@ -40,6 +40,8 @@ const MONTHS = [
   "Dec",
 ];
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+// Max day per month; Feb allows 29 (no year, so leap-day birthdays are valid).
+const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 const GAP_OPTIONS = [
   "2 weeks",
   "3 weeks",
@@ -89,11 +91,20 @@ export function CustomerDialog({
 
   if (!customer) return null;
 
+  // --- validation ---
+  const lastNameValid = lastName.trim() !== "";
+  const phoneValid = /^(?:\+?61|0)4\d{8}$/.test(phone.replace(/[\s()-]/g, ""));
+  const emailValid =
+    email.trim() === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const bothBday = birthDay !== "" && birthMonth !== "";
+  const birthdayValid =
+    (birthDay === "" && birthMonth === "") ||
+    (bothBday && Number(birthDay) <= DAYS_IN_MONTH[Number(birthMonth) - 1]);
+  const formValid =
+    lastNameValid && phoneValid && emailValid && birthdayValid;
+
   const save = () => {
-    if (!firstName.trim() && !lastName.trim()) {
-      toast.error("Name is required");
-      return;
-    }
+    if (!formValid) return;
     // Compose the day/month back into the stored date (year is a placeholder).
     const birthday =
       birthMonth && birthDay
@@ -147,7 +158,11 @@ export function CustomerDialog({
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Smith"
+                aria-invalid={!lastNameValid}
               />
+              {!lastNameValid && (
+                <p className="text-xs text-destructive">Last name is required</p>
+              )}
             </div>
           </div>
 
@@ -160,7 +175,13 @@ export function CustomerDialog({
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="0412 345 678"
+              aria-invalid={!phoneValid}
             />
+            {!phoneValid && (
+              <p className="text-xs text-destructive">
+                Enter a valid Australian mobile (e.g. 0412 345 678)
+              </p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -173,7 +194,13 @@ export function CustomerDialog({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="jane@example.com"
+              aria-invalid={!emailValid}
             />
+            {!emailValid && (
+              <p className="text-xs text-destructive">
+                Enter a valid email address
+              </p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -209,6 +236,11 @@ export function CustomerDialog({
                 </SelectContent>
               </Select>
             </div>
+            {!birthdayValid && (
+              <p className="text-xs text-destructive">
+                Pick a valid day and month
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -256,8 +288,8 @@ export function CustomerDialog({
           <Button variant="outline" onClick={onClose} disabled={pending}>
             Close
           </Button>
-          <Button onClick={save} disabled={pending}>
-            Save
+          <Button onClick={save} disabled={pending || !formValid}>
+            Update
           </Button>
         </DialogFooter>
       </DialogContent>
