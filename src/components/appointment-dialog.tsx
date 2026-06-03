@@ -97,6 +97,11 @@ export function AppointmentDialog({
   const filteredCustomers = customers.filter((x) =>
     x.name.toLowerCase().includes(customerSearch.trim().toLowerCase()),
   );
+  // The customer currently selected in the autocomplete (staged, not committed).
+  const previewCustomer =
+    draftCustomerId != null
+      ? customers.find((x) => x.id === draftCustomerId)
+      : undefined;
 
   const startChange = () => {
     setChanging(true);
@@ -251,16 +256,17 @@ export function AppointmentDialog({
               </div>
             )}
 
-            {/* While changing, keep the icons but mask the details. */}
+            {/* While changing, keep the icons; show the selected customer's
+                details, or masked placeholders until one is chosen. */}
             {changing ? (
               <>
                 <div className="flex w-fit items-center gap-1.5 text-muted-foreground">
                   <Phone className="size-3.5" />
-                  ---- --- ---
+                  {previewCustomer?.phone || "---- --- ---"}
                 </div>
                 <div className="flex w-fit items-center gap-1.5 text-muted-foreground">
                   <Mail className="size-3.5" />
-                  -------@-------.com
+                  {previewCustomer?.email || "-------@-------.com"}
                 </div>
               </>
             ) : (
