@@ -140,8 +140,12 @@ export function AppointmentDialog({
   const cancelReschedule = () => setRescheduling(false);
 
   const save = () => {
+    const rescheduled = startMs !== appointment.startsAt.getTime();
+    const newDay = format(new Date(startMs), "yyyy-MM-dd");
+    const movedToNewDay =
+      rescheduled && newDay !== format(appointment.startsAt, "yyyy-MM-dd");
     startTransition(async () => {
-      if (startMs !== appointment.startsAt.getTime()) {
+      if (rescheduled) {
         await rescheduleAppointment(appointment.id, startMs);
       }
       await updateAppointment(appointment.id, {
@@ -151,6 +155,8 @@ export function AppointmentDialog({
         customerId,
       });
       toast.success("Appointment updated");
+      // If the booking moved to a different day, jump the calendar to it.
+      if (movedToNewDay) router.push(`/?date=${newDay}`);
       router.refresh();
       onClose();
     });
