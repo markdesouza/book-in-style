@@ -44,6 +44,12 @@ interface DragState {
 
 const DRAG_THRESHOLD = 5;
 
+/** Ordinal suffix for a day of the month, e.g. 1 → "st", 22 → "nd". */
+function ordinalSuffix(n: number): string {
+  if (n % 100 >= 11 && n % 100 <= 13) return "th";
+  return ["th", "st", "nd", "rd"][n % 10] ?? "th";
+}
+
 export function CalendarGrid({
   days,
   appointments,
@@ -304,7 +310,11 @@ export function CalendarGrid({
                         "rounded-full bg-primary px-2 py-0.5 text-primary-foreground",
                     )}
                   >
-                    {format(day, "do MMM")}
+                    {format(day, "d")}
+                    <sup className="text-[0.7em]">
+                      {ordinalSuffix(day.getDate())}
+                    </sup>{" "}
+                    {format(day, "MMM")}
                   </span>
                 </div>
 
