@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
+import { Manrope, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 // Named `--font-sans` so the theme token (`@theme inline`) picks it up.
-const fontSans = Inter({
+const fontSans = Manrope({
   variable: "--font-sans",
   subsets: ["latin"],
 });
