@@ -13,12 +13,12 @@ async function seed() {
   const inserted = await db
     .insert(customers)
     .values([
-      { name: "Olivia Bennett", phone: "0412 345 678", email: "olivia@example.com", defaultLengthMin: 45, birthday: "1990-07-14" },
-      { name: "Liam Carter", phone: "0423 111 222", email: "liam@example.com", defaultLengthMin: 30, birthday: "1985-03-02" },
-      { name: "Sophie Nguyen", phone: "0455 987 654", email: "sophie@example.com", defaultLengthMin: 60, birthday: "1998-11-23" },
-      { name: "Marcus Reed", phone: "0466 222 333", email: "marcus@example.com", defaultLengthMin: 20, birthday: "1979-06-02" },
-      { name: "Ava Thompson", phone: "0477 444 555", email: "ava@example.com", defaultLengthMin: 90, birthday: "2001-01-30" },
-      { name: "Noah Williams", phone: "0488 555 666", email: "noah@example.com", defaultLengthMin: 40, birthday: "1995-09-09" },
+      { name: "Olivia Bennett", phone: "0412 345 678", email: "olivia@example.com", defaultLengthMin: 45, birthday: "1990-07-14", usualGap: "4 weeks" },
+      { name: "Liam Carter", phone: "0423 111 222", email: "liam@example.com", defaultLengthMin: 30, birthday: "1985-03-02", usualGap: "3 weeks" },
+      { name: "Sophie Nguyen", phone: "0455 987 654", email: "sophie@example.com", defaultLengthMin: 60, birthday: "1998-11-23", usualGap: "6 weeks" },
+      { name: "Marcus Reed", phone: "0466 222 333", email: "marcus@example.com", defaultLengthMin: 20, birthday: "1979-06-02", usualGap: "2 weeks" },
+      { name: "Ava Thompson", phone: "0477 444 555", email: "ava@example.com", defaultLengthMin: 90, birthday: "2001-01-30", usualGap: "3 months" },
+      { name: "Noah Williams", phone: "0488 555 666", email: "noah@example.com", defaultLengthMin: 40, birthday: "1995-09-09", usualGap: "5 weeks" },
     ])
     .returning();
 

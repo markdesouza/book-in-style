@@ -13,6 +13,8 @@ export const customers = sqliteTable("customers", {
   email: text("email"),
   defaultLengthMin: integer("default_length_min").notNull().default(30),
   birthday: text("birthday"),
+  /** Usual gap between this customer's appointments, e.g. "4 weeks". */
+  usualGap: text("usual_gap"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),

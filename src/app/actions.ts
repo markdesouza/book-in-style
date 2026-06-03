@@ -54,6 +54,7 @@ export async function updateCustomer(
     email?: string;
     defaultLengthMin?: number;
     birthday?: string;
+    usualGap?: string;
   },
 ) {
   await db
@@ -64,6 +65,7 @@ export async function updateCustomer(
       email: input.email?.trim() || null,
       defaultLengthMin: clampLength(input.defaultLengthMin ?? 30),
       birthday: input.birthday || null,
+      usualGap: input.usualGap || null,
     })
     .where(eq(customers.id, id));
   revalidatePath("/");
