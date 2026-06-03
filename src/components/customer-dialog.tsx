@@ -159,9 +159,7 @@ export function CustomerDialog({
                   Last name
                 </Label>
                 {!lastNameValid && (
-                  <span className="text-xs font-normal text-destructive">
-                    required
-                  </span>
+                  <span className="text-xs font-normal text-destructive">Required</span>
                 )}
               </div>
               <Input
@@ -169,7 +167,6 @@ export function CustomerDialog({
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Smith"
-                aria-invalid={!lastNameValid}
               />
             </div>
           </div>
@@ -184,7 +181,7 @@ export function CustomerDialog({
               </Label>
               {!phoneValid && (
                 <span className="text-xs font-normal text-destructive">
-                  valid Australian mobile required
+                  Valid Australian mobile required
                 </span>
               )}
             </div>
@@ -193,7 +190,6 @@ export function CustomerDialog({
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="0412 345 678"
-              aria-invalid={!phoneValid}
             />
           </div>
 
@@ -206,9 +202,7 @@ export function CustomerDialog({
                 Email
               </Label>
               {!emailValid && (
-                <span className="text-xs font-normal text-destructive">
-                  invalid email
-                </span>
+                <span className="text-xs font-normal text-destructive">Invalid email</span>
               )}
             </div>
             <Input
@@ -217,7 +211,6 @@ export function CustomerDialog({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="jane@example.com"
-              aria-invalid={!emailValid}
             />
           </div>
 
@@ -227,9 +220,7 @@ export function CustomerDialog({
                 Birthday
               </Label>
               {!birthdayValid && (
-                <span className="text-xs font-normal text-destructive">
-                  invalid date
-                </span>
+                <span className="text-xs font-normal text-destructive">Invalid date</span>
               )}
             </div>
             <div className="flex gap-2">
