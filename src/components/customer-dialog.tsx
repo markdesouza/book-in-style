@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { LENGTH_OPTIONS } from "@/lib/salon";
 import type { Customer } from "@/db/schema";
 import { updateCustomer } from "@/app/actions";
@@ -40,6 +41,8 @@ const MONTHS = [
   "Dec",
 ];
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+// Max day per month; Feb allows 29 (no year, so leap-day birthdays are valid).
+const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 const GAP_OPTIONS = [
   "2 weeks",
   "3 weeks",
@@ -89,11 +92,20 @@ export function CustomerDialog({
 
   if (!customer) return null;
 
+  // --- validation ---
+  const lastNameValid = lastName.trim() !== "";
+  const phoneValid = /^(?:\+?61|0)4\d{8}$/.test(phone.replace(/[\s()-]/g, ""));
+  const emailValid =
+    email.trim() === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const bothBday = birthDay !== "" && birthMonth !== "";
+  const birthdayValid =
+    (birthDay === "" && birthMonth === "") ||
+    (bothBday && Number(birthDay) <= DAYS_IN_MONTH[Number(birthMonth) - 1]);
+  const formValid =
+    lastNameValid && phoneValid && emailValid && birthdayValid;
+
   const save = () => {
-    if (!firstName.trim() && !lastName.trim()) {
-      toast.error("Name is required");
-      return;
-    }
+    if (!formValid) return;
     // Compose the day/month back into the stored date (year is a placeholder).
     const birthday =
       birthMonth && birthDay
@@ -139,9 +151,17 @@ export function CustomerDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="cust-last" className="font-bold">
-                Last name
-              </Label>
+              <div className="flex items-baseline gap-2">
+                <Label
+                  htmlFor="cust-last"
+                  className={cn("font-bold", !lastNameValid && "text-destructive")}
+                >
+                  Last name
+                </Label>
+                {!lastNameValid && (
+                  <span className="text-xs font-normal text-destructive">Required</span>
+                )}
+              </div>
               <Input
                 id="cust-last"
                 value={lastName}
@@ -152,9 +172,19 @@ export function CustomerDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="cust-phone" className="font-bold">
-              Mobile
-            </Label>
+            <div className="flex items-baseline gap-2">
+              <Label
+                htmlFor="cust-phone"
+                className={cn("font-bold", !phoneValid && "text-destructive")}
+              >
+                Mobile
+              </Label>
+              {!phoneValid && (
+                <span className="text-xs font-normal text-destructive">
+                  Valid Australian mobile required
+                </span>
+              )}
+            </div>
             <Input
               id="cust-phone"
               value={phone}
@@ -164,9 +194,17 @@ export function CustomerDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="cust-email" className="font-bold">
-              Email
-            </Label>
+            <div className="flex items-baseline gap-2">
+              <Label
+                htmlFor="cust-email"
+                className={cn("font-bold", !emailValid && "text-destructive")}
+              >
+                Email
+              </Label>
+              {!emailValid && (
+                <span className="text-xs font-normal text-destructive">Invalid email</span>
+              )}
+            </div>
             <Input
               id="cust-email"
               type="email"
@@ -177,13 +215,24 @@ export function CustomerDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label className="font-bold">Birthday</Label>
+            <div className="flex items-baseline gap-2">
+              <Label className={cn("font-bold", !birthdayValid && "text-destructive")}>
+                Birthday
+              </Label>
+              {!birthdayValid && (
+                <span className="text-xs font-normal text-destructive">Invalid date</span>
+              )}
+            </div>
             <div className="flex gap-2">
-              <Select value={birthDay} onValueChange={(v) => v && setBirthDay(v)}>
+              <Select
+                value={birthDay}
+                onValueChange={(v) => v && setBirthDay(v === "-" ? "" : v)}
+              >
                 <SelectTrigger className="w-20" aria-label="Birthday day">
                   <SelectValue placeholder="Day" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="-">-</SelectItem>
                   {DAYS.map((d) => (
                     <SelectItem key={d} value={String(d)}>
                       {d}
@@ -193,14 +242,21 @@ export function CustomerDialog({
               </Select>
               <Select
                 value={birthMonth}
-                onValueChange={(v) => v && setBirthMonth(v)}
+                onValueChange={(v) => v && setBirthMonth(v === "-" ? "" : v)}
               >
                 <SelectTrigger className="w-24" aria-label="Birthday month">
                   <SelectValue placeholder="Month">
-                    {(v: string) => MONTHS[Number(v) - 1]}
+                    {(v: string) =>
+                      v ? (
+                        MONTHS[Number(v) - 1]
+                      ) : (
+                        <span className="text-muted-foreground">Month</span>
+                      )
+                    }
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="-">-</SelectItem>
                   {MONTHS.map((name, i) => (
                     <SelectItem key={name} value={String(i + 1)}>
                       {name}
@@ -256,8 +312,8 @@ export function CustomerDialog({
           <Button variant="outline" onClick={onClose} disabled={pending}>
             Close
           </Button>
-          <Button onClick={save} disabled={pending}>
-            Save
+          <Button onClick={save} disabled={pending || !formValid}>
+            Update
           </Button>
         </DialogFooter>
       </DialogContent>
