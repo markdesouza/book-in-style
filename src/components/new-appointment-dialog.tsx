@@ -28,6 +28,13 @@ import { LENGTH_OPTIONS } from "@/lib/salon";
 import type { Customer } from "@/db/schema";
 import { createAppointment, createCustomer } from "@/app/actions";
 
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
 export function NewAppointmentDialog({
   open,
   defaultStart,
@@ -55,7 +62,9 @@ export function NewAppointmentDialog({
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [birthday, setBirthday] = useState("");
+  const [birthDay, setBirthDay] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (open && defaultStart) {
@@ -69,7 +78,9 @@ export function NewAppointmentDialog({
       setLastName("");
       setPhone("");
       setEmail("");
-      setBirthday("");
+      setBirthDay("");
+      setBirthMonth("");
+      setTouched({});
       setLengthMin(30);
     }
   }, [open, defaultStart, customers.length]);
@@ -84,6 +95,20 @@ export function NewAppointmentDialog({
     setSearchOpen(false);
   };
 
+  // New-customer validation (mirrors the customer details dialog).
+  const lastNameValid = lastName.trim() !== "";
+  const phoneValid = /^(?:\+?61|0)4\d{8}$/.test(phone.replace(/[\s()-]/g, ""));
+  const emailValid =
+    email.trim() === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const birthdayValid =
+    (birthDay === "" && birthMonth === "") ||
+    (birthDay !== "" &&
+      birthMonth !== "" &&
+      Number(birthDay) <= DAYS_IN_MONTH[Number(birthMonth) - 1]);
+  const newCustomerValid =
+    lastNameValid && phoneValid && emailValid && birthdayValid;
+  const markTouched = (f: string) => setTouched((t) => ({ ...t, [f]: true }));
+
   const submit = () => {
     const startsAt = new Date(startStr).getTime();
     if (!startStr || Number.isNaN(startsAt)) {
@@ -95,10 +120,14 @@ export function NewAppointmentDialog({
       try {
         let cid: number;
         if (tab === "new") {
-          if (!firstName.trim() && !lastName.trim()) {
-            toast.error("Customer name is required");
+          if (!newCustomerValid) {
+            setTouched({ last: true, phone: true, email: true, bday: true });
             return;
           }
+          const birthday =
+            birthDay && birthMonth
+              ? `2000-${birthMonth.padStart(2, "0")}-${birthDay.padStart(2, "0")}`
+              : "";
           const created = await createCustomer({
             firstName,
             lastName,
@@ -199,44 +228,143 @@ export function NewAppointmentDialog({
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="c-last">Last name</Label>
+                  <div className="flex items-baseline gap-2">
+                    <Label
+                      htmlFor="c-last"
+                      className={cn(
+                        touched.last && !lastNameValid && "text-destructive",
+                      )}
+                    >
+                      Last name
+                    </Label>
+                    {touched.last && !lastNameValid && (
+                      <span className="text-xs text-destructive">Required</span>
+                    )}
+                  </div>
                   <Input
                     id="c-last"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
+                    onBlur={() => markTouched("last")}
                     placeholder="Smith"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-2">
-                  <Label htmlFor="c-phone">Phone</Label>
-                  <Input
-                    id="c-phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="0412 345 678"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="c-bday">Birthday</Label>
-                  <Input
-                    id="c-bday"
-                    type="date"
-                    value={birthday}
-                    onChange={(e) => setBirthday(e.target.value)}
-                  />
-                </div>
-              </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="c-email">Email</Label>
+                <div className="flex items-baseline gap-2">
+                  <Label
+                    htmlFor="c-phone"
+                    className={cn(
+                      touched.phone && !phoneValid && "text-destructive",
+                    )}
+                  >
+                    Mobile
+                  </Label>
+                  {touched.phone && !phoneValid && (
+                    <span className="text-xs text-destructive">
+                      Valid Australian mobile required
+                    </span>
+                  )}
+                </div>
+                <Input
+                  id="c-phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  onBlur={() => markTouched("phone")}
+                  placeholder="0412 345 678"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <div className="flex items-baseline gap-2">
+                  <Label
+                    htmlFor="c-email"
+                    className={cn(
+                      touched.email && !emailValid && "text-destructive",
+                    )}
+                  >
+                    Email
+                  </Label>
+                  {touched.email && !emailValid && (
+                    <span className="text-xs text-destructive">
+                      Invalid email
+                    </span>
+                  )}
+                </div>
                 <Input
                   id="c-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => markTouched("email")}
                   placeholder="jane@example.com"
                 />
+              </div>
+
+              <div className="grid gap-2">
+                <div className="flex items-baseline gap-2">
+                  <Label
+                    className={cn(
+                      touched.bday && !birthdayValid && "text-destructive",
+                    )}
+                  >
+                    Birthday
+                  </Label>
+                  {touched.bday && !birthdayValid && (
+                    <span className="text-xs text-destructive">
+                      Invalid date
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Select
+                    value={birthDay}
+                    onValueChange={(v) => {
+                      if (v) setBirthDay(v === "-" ? "" : v);
+                      markTouched("bday");
+                    }}
+                  >
+                    <SelectTrigger className="w-20" aria-label="Birthday day">
+                      <SelectValue placeholder="Day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="-">-</SelectItem>
+                      {DAYS.map((d) => (
+                        <SelectItem key={d} value={String(d)}>
+                          {d}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={birthMonth}
+                    onValueChange={(v) => {
+                      if (v) setBirthMonth(v === "-" ? "" : v);
+                      markTouched("bday");
+                    }}
+                  >
+                    <SelectTrigger className="w-24" aria-label="Birthday month">
+                      <SelectValue placeholder="Month">
+                        {(v: string) =>
+                          v ? (
+                            MONTHS[Number(v) - 1]
+                          ) : (
+                            <span className="text-muted-foreground">Month</span>
+                          )
+                        }
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="-">-</SelectItem>
+                      {MONTHS.map((name, i) => (
+                        <SelectItem key={name} value={String(i + 1)}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
@@ -287,7 +415,10 @@ export function NewAppointmentDialog({
           <Button variant="ghost" onClick={onClose} disabled={pending}>
             Cancel
           </Button>
-          <Button onClick={submit} disabled={pending}>
+          <Button
+            onClick={submit}
+            disabled={pending || (tab === "new" && !newCustomerValid)}
+          >
             Create
           </Button>
         </DialogFooter>
