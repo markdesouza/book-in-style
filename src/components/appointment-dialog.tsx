@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format, isValid, parseISO } from "date-fns";
-import { Mail, Phone } from "lucide-react";
+import { Check, Mail, Phone, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -68,6 +68,9 @@ export function AppointmentDialog({
   const [status, setStatus] = useState<AppointmentStatus>("unconfirmed");
   const [customerId, setCustomerId] = useState(0);
   const [changing, setChanging] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [draftCustomerId, setDraftCustomerId] = useState<number | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
   const [startStr, setStartStr] = useState("");
 
@@ -79,6 +82,9 @@ export function AppointmentDialog({
       setStatus(appointment.status);
       setCustomerId(appointment.customerId);
       setChanging(false);
+      setCustomerSearch("");
+      setDraftCustomerId(null);
+      setSearchOpen(false);
       setRescheduling(false);
       setStartStr(format(appointment.startsAt, "yyyy-MM-dd'T'HH:mm"));
     }
@@ -87,6 +93,24 @@ export function AppointmentDialog({
   if (!appointment) return null;
   const customer =
     customers.find((x) => x.id === customerId) ?? appointment.customer;
+
+  const filteredCustomers = customers.filter((x) =>
+    x.name.toLowerCase().includes(customerSearch.trim().toLowerCase()),
+  );
+
+  const startChange = () => {
+    setChanging(true);
+    setCustomerSearch("");
+    setDraftCustomerId(null);
+    setSearchOpen(true);
+  };
+  // Tick: stage the chosen customer (persisted only on Update).
+  const confirmChange = () => {
+    if (draftCustomerId != null) setCustomerId(draftCustomerId);
+    setChanging(false);
+  };
+  // Cross: discard and keep the previous customer.
+  const cancelChange = () => setChanging(false);
 
   const save = () => {
     const newStartMs = new Date(startStr).getTime();
@@ -128,68 +152,107 @@ export function AppointmentDialog({
         <div className="-mt-2.5 space-y-4 py-1 text-sm">
           {/* Customer */}
           <div className="space-y-1">
-            <div className="flex items-center justify-between gap-2">
-              <p className="truncate font-bold text-foreground">
-                {customer.name}
-              </p>
-              <div className="flex shrink-0 gap-1">
-                <Popover>
-                  <PopoverTrigger
-                    className={cn(
-                      "inline-flex items-center rounded-md border bg-background font-medium outline-none hover:bg-accent",
-                      smallBtn,
-                    )}
-                  >
-                    View
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-64">
-                    <p className="font-semibold">{customer.name}</p>
-                    <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      <dt className="font-medium text-foreground">Phone</dt>
-                      <dd>{customer.phone || "—"}</dd>
-                      <dt className="font-medium text-foreground">Email</dt>
-                      <dd className="truncate">{customer.email || "—"}</dd>
-                      <dt className="font-medium text-foreground">Birthday</dt>
-                      <dd>{birthday}</dd>
-                      <dt className="font-medium text-foreground">Usual</dt>
-                      <dd>{customer.defaultLengthMin} min</dd>
-                    </dl>
-                  </PopoverContent>
-                </Popover>
+            {changing ? (
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    autoFocus
+                    placeholder="Search customer…"
+                    value={customerSearch}
+                    onChange={(e) => {
+                      setCustomerSearch(e.target.value);
+                      setDraftCustomerId(null);
+                      setSearchOpen(true);
+                    }}
+                    onFocus={() => setSearchOpen(true)}
+                    onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+                  />
+                  {searchOpen && filteredCustomers.length > 0 && (
+                    <ul className="absolute z-50 mt-1 max-h-44 w-full overflow-auto rounded-md border bg-popover py-1 shadow-md ring-1 ring-foreground/10">
+                      {filteredCustomers.map((x) => (
+                        <li key={x.id}>
+                          <button
+                            type="button"
+                            // Keep the input focused so onBlur doesn't pre-empt this click.
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setDraftCustomerId(x.id);
+                              setCustomerSearch(x.name);
+                              setSearchOpen(false);
+                            }}
+                            className={cn(
+                              "w-full px-2 py-1.5 text-left text-sm hover:bg-accent",
+                              draftCustomerId === x.id && "bg-accent",
+                            )}
+                          >
+                            {x.name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
                 <Button
                   variant="outline"
-                  className={smallBtn}
-                  onClick={() => setChanging((v) => !v)}
-                  aria-pressed={changing}
+                  size="icon"
+                  className="size-7 shrink-0 text-green-600"
+                  aria-label="Confirm customer change"
+                  onClick={confirmChange}
                 >
-                  Change
+                  <Check className="size-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-7 shrink-0 text-rose-600"
+                  aria-label="Cancel customer change"
+                  onClick={cancelChange}
+                >
+                  <X className="size-4" />
                 </Button>
               </div>
-            </div>
-
-            {changing && (
-              <Select
-                value={String(customerId)}
-                onValueChange={(v) => v && setCustomerId(Number(v))}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue>
-                    {(v: string) =>
-                      customers.find((x) => String(x.id) === v)?.name
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((x) => (
-                    <SelectItem key={x.id} value={String(x.id)}>
-                      {x.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            ) : (
+              <div className="flex items-center justify-between gap-2">
+                <p className="truncate font-bold text-foreground">
+                  {customer.name}
+                </p>
+                <div className="flex shrink-0 gap-1">
+                  <Popover>
+                    <PopoverTrigger
+                      className={cn(
+                        "inline-flex items-center rounded-md border bg-background font-medium outline-none hover:bg-accent",
+                        smallBtn,
+                      )}
+                    >
+                      View
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-64">
+                      <p className="font-semibold">{customer.name}</p>
+                      <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        <dt className="font-medium text-foreground">Phone</dt>
+                        <dd>{customer.phone || "—"}</dd>
+                        <dt className="font-medium text-foreground">Email</dt>
+                        <dd className="truncate">{customer.email || "—"}</dd>
+                        <dt className="font-medium text-foreground">Birthday</dt>
+                        <dd>{birthday}</dd>
+                        <dt className="font-medium text-foreground">Usual</dt>
+                        <dd>{customer.defaultLengthMin} min</dd>
+                      </dl>
+                    </PopoverContent>
+                  </Popover>
+                  <Button
+                    variant="outline"
+                    className={smallBtn}
+                    onClick={startChange}
+                  >
+                    Change
+                  </Button>
+                </div>
+              </div>
             )}
 
-            {customer.phone && (
+            {/* Phone / email hidden while changing the customer. */}
+            {!changing && customer.phone && (
               <a
                 href={`tel:${customer.phone.replace(/\s+/g, "")}`}
                 className={contactLink}
@@ -198,7 +261,7 @@ export function AppointmentDialog({
                 {customer.phone}
               </a>
             )}
-            {customer.email && (
+            {!changing && customer.email && (
               <a href={`mailto:${customer.email}`} className={contactLink}>
                 <Mail className="size-3.5" />
                 {customer.email}
