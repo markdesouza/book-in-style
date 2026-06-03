@@ -290,21 +290,21 @@ export function CalendarGrid({
                 {/* Day header */}
                 <div
                   className={cn(
-                    "sticky top-0 z-10 flex h-10 flex-col items-center justify-center border-b bg-background text-xs",
+                    "sticky top-0 z-10 flex h-10 flex-col items-center justify-center gap-0.5 border-b bg-background text-xs",
                     isToday && "bg-primary/5",
                   )}
                 >
-                  <span className="text-muted-foreground">
+                  <span className="text-sm leading-none text-muted-foreground">
                     {format(day, "EEE")}
                   </span>
                   <span
                     className={cn(
-                      "font-semibold",
+                      "font-semibold leading-none",
                       isToday &&
-                        "flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground",
+                        "rounded-full bg-primary px-2 py-0.5 text-primary-foreground",
                     )}
                   >
-                    {format(day, "d")}
+                    {format(day, "do MMM")}
                   </span>
                 </div>
 
