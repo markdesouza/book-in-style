@@ -165,9 +165,9 @@ export function AppointmentDialog({
   return (
     <>
       <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="grid-cols-[minmax(0,1fr)] sm:max-w-md">
         <DialogHeader className="-mx-4 -mt-4 rounded-t-xl border-b bg-muted/50 px-4 py-[0.8rem]">
-          <DialogTitle className="font-bold">Appointment details</DialogTitle>
+          <DialogTitle className="font-bold">Appointment Details</DialogTitle>
           <DialogDescription className="sr-only">
             Edit the appointment&rsquo;s status, duration, time and customer.
           </DialogDescription>
@@ -238,10 +238,10 @@ export function AppointmentDialog({
               </div>
             ) : (
               <div className="flex items-center justify-between gap-2">
-                <p className="truncate font-bold text-foreground">
+                <p className="min-w-0 truncate font-bold text-foreground">
                   {customer.name}
                 </p>
-                <div className="flex shrink-0 gap-1">
+                <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
                   <Button
                     variant="outline"
                     className={smallBtn}
@@ -338,7 +338,7 @@ export function AppointmentDialog({
               <>
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <Label className="font-bold">Time:</Label>
-                  <span className="truncate text-muted-foreground">
+                  <span className="min-w-0 truncate text-muted-foreground">
                     {format(new Date(startMs), "h:mmaaa, EEEE (d MMMM)")}
                   </span>
                 </div>
@@ -424,9 +424,9 @@ export function AppointmentDialog({
           </div>
         </div>
 
-        <DialogFooter className="py-[0.8rem] sm:justify-between">
+        <DialogFooter className="flex-row justify-between py-[0.8rem] sm:justify-between">
           <Button variant="outline" onClick={onClose} disabled={pending}>
-            Close
+            Cancel
           </Button>
           <Button onClick={save} disabled={pending || changing || rescheduling}>
             Update
