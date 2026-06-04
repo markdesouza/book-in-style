@@ -131,7 +131,7 @@ export function CustomerDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="-mx-4 -mt-4 rounded-t-xl border-b bg-muted/50 px-4 py-[0.8rem]">
-          <DialogTitle className="font-bold">Customer details</DialogTitle>
+          <DialogTitle className="font-bold">Customer Details</DialogTitle>
           <DialogDescription className="sr-only">
             Edit the customer&rsquo;s details.
           </DialogDescription>
@@ -141,7 +141,7 @@ export function CustomerDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label htmlFor="cust-first" className="font-bold">
-                First name
+                First Name
               </Label>
               <Input
                 id="cust-first"
@@ -156,7 +156,7 @@ export function CustomerDialog({
                   htmlFor="cust-last"
                   className={cn("font-bold", !lastNameValid && "text-destructive")}
                 >
-                  Last name
+                  Last Name
                 </Label>
                 {!lastNameValid && (
                   <span className="text-xs font-normal text-destructive">Required</span>
@@ -270,7 +270,7 @@ export function CustomerDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label htmlFor="cust-length" className="font-bold">
-                Usual duration
+                Usual Duration
               </Label>
               <Select
                 value={String(defaultLengthMin)}
@@ -308,9 +308,9 @@ export function CustomerDialog({
           </div>
         </div>
 
-        <DialogFooter className="py-[0.8rem] sm:justify-between">
+        <DialogFooter className="flex-row justify-between py-[0.8rem] sm:justify-between">
           <Button variant="outline" onClick={onClose} disabled={pending}>
-            Close
+            Cancel
           </Button>
           <Button onClick={save} disabled={pending || !formValid}>
             Update

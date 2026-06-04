@@ -164,16 +164,16 @@ export function NewAppointmentDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New appointment</DialogTitle>
+          <DialogTitle>New Appointment</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="existing" disabled={!customers.length}>
-                Existing customer
+                Existing Customer
               </TabsTrigger>
-              <TabsTrigger value="new">New customer</TabsTrigger>
+              <TabsTrigger value="new">New Customer</TabsTrigger>
             </TabsList>
 
             <TabsContent value="existing" className="pt-1">
@@ -371,7 +371,7 @@ export function NewAppointmentDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <Label htmlFor="a-start">Date &amp; time</Label>
+              <Label htmlFor="a-start">Date &amp; Time</Label>
               <Input
                 id="a-start"
                 type="datetime-local"
