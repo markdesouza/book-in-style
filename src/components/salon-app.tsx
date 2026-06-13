@@ -125,7 +125,7 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
             <CustomerSearch
               customers={customers}
               onSelect={openCustomer}
-              className="w-44"
+              className="w-44 lg:w-[280px]"
             />
           </div>
 
