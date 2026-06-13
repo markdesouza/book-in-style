@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff,
   Scissors,
+  UserSearch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -23,6 +24,8 @@ import type { Customer, NewsEvent } from "@/db/schema";
 import { CalendarGrid } from "@/components/calendar-grid";
 import { AppointmentDialog } from "@/components/appointment-dialog";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
+import { CustomerDialog } from "@/components/customer-dialog";
+import { CustomerSearch } from "@/components/customer-search";
 import { NewsFeed } from "@/components/news-feed";
 
 interface Props {
@@ -43,6 +46,13 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
     null,
   );
   const [newsOpen, setNewsOpen] = useState(false);
+  const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
+  const openCustomer = useCallback((customer: Customer) => {
+    setViewingCustomer(customer);
+    setMobileSearchOpen(false);
+  }, []);
 
   const days = useMemo(
     () => (isMobile ? [viewDate] : weekDays(viewDate)),
@@ -100,6 +110,26 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
         </div>
 
         <div className="flex items-center justify-end gap-3">
+          <div className="hidden md:block">
+            <CustomerSearch
+              customers={customers}
+              onSelect={openCustomer}
+              className="w-44"
+            />
+          </div>
+
+          {/* Mobile: a toggle that reveals the search row underneath. */}
+          <Button
+            variant={mobileSearchOpen ? "secondary" : "outline"}
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileSearchOpen((v) => !v)}
+            aria-label="Search customer"
+            aria-pressed={mobileSearchOpen}
+          >
+            <UserSearch className="size-4" />
+          </Button>
+
           <Button
             variant={showCancelled ? "secondary" : "outline"}
             size="icon"
@@ -142,6 +172,18 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
         </div>
       </header>
 
+      {/* Mobile-only search row, toggled from the header button. */}
+      {mobileSearchOpen && (
+        <div className="border-b px-4 py-2 md:hidden">
+          <CustomerSearch
+            customers={customers}
+            onSelect={openCustomer}
+            className="w-full"
+            autoFocus
+          />
+        </div>
+      )}
+
       <CalendarGrid
         days={days}
         appointments={appointments}
@@ -162,6 +204,11 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
         defaultStart={creating?.start ?? null}
         customers={customers}
         onClose={() => setCreating(null)}
+      />
+
+      <CustomerDialog
+        customer={viewingCustomer}
+        onClose={() => setViewingCustomer(null)}
       />
     </div>
   );
