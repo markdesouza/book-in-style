@@ -21,10 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { LENGTH_OPTIONS } from "@/lib/salon";
-import type { Customer } from "@/db/schema";
-import { updateCustomer } from "@/app/actions";
+import { LENGTH_OPTIONS, type AppointmentWithCustomer } from "@/lib/salon";
+import type { AppointmentStatus, Customer } from "@/db/schema";
+import { getCustomerAppointments, updateCustomer } from "@/app/actions";
 
 const MONTHS = [
   "Jan",
@@ -40,6 +41,12 @@ const MONTHS = [
   "Nov",
   "Dec",
 ];
+// Dot colour per status, matching the calendar card palette.
+const STATUS_DOT: Record<AppointmentStatus, string> = {
+  cancelled: "bg-gray-400",
+  unconfirmed: "bg-yellow-400",
+  confirmed: "bg-green-500",
+};
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 // Max day per month; Feb allows 29 (no year, so leap-day birthdays are valid).
 const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -60,12 +67,19 @@ const GAP_OPTIONS = [
 export function CustomerDialog({
   customer,
   onClose,
+  onOpenAppointment,
 }: {
   customer: Customer | null;
   onClose: () => void;
+  /** Jump to an appointment of this customer (parent handles navigation). */
+  onOpenAppointment?: (appointment: AppointmentWithCustomer) => void;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [appts, setAppts] = useState<{
+    future: AppointmentWithCustomer[];
+    recent: AppointmentWithCustomer[];
+  } | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -88,6 +102,19 @@ export function CustomerDialog({
       setDefaultLengthMin(customer.defaultLengthMin);
       setUsualGap(customer.usualGap ?? "");
     }
+  }, [customer]);
+
+  // Load this customer's upcoming and recent appointments.
+  useEffect(() => {
+    if (!customer) return;
+    let active = true;
+    setAppts(null);
+    getCustomerAppointments(customer.id).then((res) => {
+      if (active) setAppts(res);
+    });
+    return () => {
+      active = false;
+    };
   }, [customer]);
 
   if (!customer) return null;
@@ -306,6 +333,30 @@ export function CustomerDialog({
               </Select>
             </div>
           </div>
+
+          {/* Future & recent appointments */}
+          <div className="grid gap-2">
+            <Label className="font-bold">Future &amp; Recent Appointments</Label>
+            {appts === null ? (
+              <p className="text-xs text-muted-foreground">Loading…</p>
+            ) : appts.future.length === 0 && appts.recent.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No appointments yet.</p>
+            ) : (
+              <div className="max-h-44 divide-y overflow-auto rounded-md border">
+                {appts.future.map((a) => (
+                  <ApptRow key={a.id} appt={a} onPick={onOpenAppointment} />
+                ))}
+                {appts.future.length > 0 && appts.recent.length > 0 && (
+                  <div className="bg-muted/50 px-2.5 py-1 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+                    Past
+                  </div>
+                )}
+                {appts.recent.map((a) => (
+                  <ApptRow key={a.id} appt={a} past onPick={onOpenAppointment} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <DialogFooter className="flex-row justify-between py-[0.8rem] sm:justify-between">
@@ -318,5 +369,41 @@ export function CustomerDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** A single clickable appointment row in the customer's history list. */
+function ApptRow({
+  appt,
+  past,
+  onPick,
+}: {
+  appt: AppointmentWithCustomer;
+  past?: boolean;
+  onPick?: (appointment: AppointmentWithCustomer) => void;
+}) {
+  const cancelled = appt.status === "cancelled";
+  return (
+    <button
+      type="button"
+      onClick={() => onPick?.(appt)}
+      className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-accent"
+    >
+      <span
+        className={cn("size-2 shrink-0 rounded-full", STATUS_DOT[appt.status])}
+      />
+      <span
+        className={cn(
+          "min-w-0 flex-1 truncate text-sm",
+          past && "text-muted-foreground",
+          cancelled && "line-through",
+        )}
+      >
+        {format(appt.startsAt, "EEE d MMM yyyy")}
+      </span>
+      <span className="shrink-0 text-xs text-muted-foreground">
+        {format(appt.startsAt, "h:mmaaa")}
+      </span>
+    </button>
   );
 }

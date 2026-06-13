@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt } from "drizzle-orm";
 import { format } from "date-fns";
 import { db } from "@/db";
 import {
@@ -10,7 +10,11 @@ import {
   newsEvents,
   type AppointmentStatus,
 } from "@/db/schema";
-import { MAX_LENGTH, MIN_LENGTH } from "@/lib/salon";
+import {
+  MAX_LENGTH,
+  MIN_LENGTH,
+  type AppointmentWithCustomer,
+} from "@/lib/salon";
 
 function clampLength(min: number) {
   const snapped = Math.round(min / 5) * 5;
@@ -82,6 +86,41 @@ export async function updateCustomer(
     })
     .where(eq(customers.id, id));
   revalidatePath("/");
+}
+
+/**
+ * A customer's upcoming and recent appointments: every future booking
+ * (ascending) plus the three most recent past ones (most recent first).
+ */
+export async function getCustomerAppointments(customerId: number): Promise<{
+  future: AppointmentWithCustomer[];
+  recent: AppointmentWithCustomer[];
+}> {
+  const now = new Date();
+  const withCustomer = (
+    r: { appointments: typeof appointments.$inferSelect; customers: typeof customers.$inferSelect },
+  ): AppointmentWithCustomer => ({ ...r.appointments, customer: r.customers });
+
+  const futureRows = await db
+    .select()
+    .from(appointments)
+    .innerJoin(customers, eq(appointments.customerId, customers.id))
+    .where(
+      and(eq(appointments.customerId, customerId), gte(appointments.startsAt, now)),
+    )
+    .orderBy(asc(appointments.startsAt));
+
+  const recentRows = await db
+    .select()
+    .from(appointments)
+    .innerJoin(customers, eq(appointments.customerId, customers.id))
+    .where(
+      and(eq(appointments.customerId, customerId), lt(appointments.startsAt, now)),
+    )
+    .orderBy(desc(appointments.startsAt))
+    .limit(3);
+
+  return { future: futureRows.map(withCustomer), recent: recentRows.map(withCustomer) };
 }
 
 // ------------------------------------------------------------- Appointments
