@@ -3,19 +3,25 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import type { Customer } from "@/db/schema";
 
 /**
  * Header autocomplete: type a name, pick a customer, and the parent opens
  * that customer's details. Mirrors the reassign autocomplete used in the
- * appointment dialog.
+ * appointment dialog. Width is set by the parent via `className` so it can be
+ * a fixed-width header control or a full-width mobile row.
  */
 export function CustomerSearch({
   customers,
   onSelect,
+  className,
+  autoFocus,
 }: {
   customers: Customer[];
   onSelect: (customer: Customer) => void;
+  className?: string;
+  autoFocus?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -35,9 +41,10 @@ export function CustomerSearch({
   };
 
   return (
-    <div className="relative">
+    <div className={cn("relative", className)}>
       <Search className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
+        autoFocus={autoFocus}
         placeholder="Search customer…"
         value={search}
         onChange={(e) => {
@@ -46,7 +53,7 @@ export function CustomerSearch({
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        className="h-9 w-44 pl-8"
+        className="h-9 w-full pl-8"
         aria-label="Search customer"
       />
       {open && matches.length > 0 && (
