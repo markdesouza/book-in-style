@@ -235,13 +235,13 @@ export function CalendarGrid({
     <div ref={scrollRef} className="flex-1 overflow-auto">
       <div className="flex min-w-fit">
         {/* Hour gutter */}
-        <div className="sticky left-0 z-20 w-12 shrink-0 bg-background sm:w-14">
+        <div className="sticky left-0 z-20 w-12 shrink-0 bg-background sm:w-14 xl:w-16">
           <div className="h-10 border-b" /> {/* header spacer */}
           <div className="relative" style={{ height: DAY_HEIGHT_PX }}>
             {hourMarks().map((m) => (
               <div
                 key={m.hour}
-                className="absolute right-2.5 -translate-y-1/2 text-[10px] text-muted-foreground sm:text-xs"
+                className="absolute right-2.5 -translate-y-1/2 text-[10px] text-muted-foreground sm:text-xs xl:text-sm"
                 style={{ top: m.top }}
               >
                 {format(new Date().setHours(m.hour, 0), "ha")}
@@ -296,11 +296,11 @@ export function CalendarGrid({
                 {/* Day header */}
                 <div
                   className={cn(
-                    "sticky top-0 z-10 flex h-10 flex-col items-center justify-center gap-0.5 border-b bg-background text-xs",
+                    "sticky top-0 z-10 flex h-10 flex-col items-center justify-center gap-0.5 border-b bg-background text-xs xl:text-sm",
                     isToday && "bg-primary/5",
                   )}
                 >
-                  <span className="text-sm leading-none text-muted-foreground">
+                  <span className="text-sm leading-none text-muted-foreground xl:text-base">
                     {format(day, "EEE")}
                   </span>
                   <span
@@ -369,7 +369,7 @@ export function CalendarGrid({
                         type="button"
                         onPointerDown={(e) => beginDrag(e, appt, top)}
                         className={cn(
-                          "absolute overflow-hidden rounded-md border border-l-4 px-1.5 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors",
+                          "absolute overflow-hidden rounded-md border border-l-4 px-1.5 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors xl:text-sm",
                           "touch-none select-none",
                           past && "saturate-[0.25]",
                           cancelled
