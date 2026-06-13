@@ -371,7 +371,7 @@ export function CalendarGrid({
                         className={cn(
                           "absolute overflow-hidden rounded-md border border-l-4 px-1.5 py-1 text-left text-[11px] leading-tight shadow-sm transition-colors",
                           "touch-none select-none",
-                          past && "saturate-[0.6]",
+                          past && "saturate-[0.25]",
                           cancelled
                             ? "border-gray-300 border-l-gray-400 bg-gray-100 text-gray-500 line-through dark:border-gray-700 dark:border-l-gray-600 dark:bg-gray-800/60 dark:text-gray-400"
                             : unconfirmed
