@@ -2,6 +2,7 @@ import {
   addDays,
   addMinutes,
   differenceInMinutes,
+  format,
   startOfDay,
   startOfWeek,
 } from "date-fns";
@@ -176,7 +177,8 @@ export function layoutDay(
 
 export function formatTimeRange(start: Date, lengthMin: number): string {
   const end = addMinutes(start, lengthMin);
-  const fmt = (d: Date) =>
-    d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  // Deterministic format (matches the dialogs, e.g. "9:00am") so the server
+  // and client render identically — locale-based toLocaleTimeString did not.
+  const fmt = (d: Date) => format(d, "h:mmaaa");
   return `${fmt(start)} – ${fmt(end)}`;
 }
