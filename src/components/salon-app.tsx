@@ -89,9 +89,9 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
 
   return (
     <div className="flex h-dvh flex-col bg-background">
-      <header className="grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-2 border-b px-4 py-3 sm:gap-4">
-        <div className="flex items-center gap-2 font-semibold">
-          <Scissors className="size-5 text-primary" />
+      <header className="grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-2 border-b px-4 py-2 sm:gap-4">
+        <div className="mr-3 flex items-center gap-2 text-xl font-semibold md:mr-0">
+          <Scissors className="size-6 text-primary" />
           <span className="hidden sm:inline">Book in Style</span>
         </div>
 
@@ -100,27 +100,32 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
           <div className="flex shrink-0 items-center gap-1">
             <Button
               variant="outline"
-              size="icon"
+              size="icon-lg"
               onClick={() => navigate(-step)}
               aria-label="Previous"
             >
-              <ChevronLeft className="size-4" />
+              <ChevronLeft className="size-5" />
             </Button>
-            <Button variant="outline" size="sm" onClick={goToday}>
+            <Button
+              variant="outline"
+              size="lg"
+              className="text-base"
+              onClick={goToday}
+            >
               Today
             </Button>
             <Button
               variant="outline"
-              size="icon"
+              size="icon-lg"
               onClick={() => navigate(step)}
               aria-label="Next"
             >
-              <ChevronRight className="size-4" />
+              <ChevronRight className="size-5" />
             </Button>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-1.5 md:gap-3">
           <div className="hidden md:block">
             <CustomerSearch
               customers={customers}
