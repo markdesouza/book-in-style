@@ -23,6 +23,8 @@ import type { Customer, NewsEvent } from "@/db/schema";
 import { CalendarGrid } from "@/components/calendar-grid";
 import { AppointmentDialog } from "@/components/appointment-dialog";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
+import { CustomerDialog } from "@/components/customer-dialog";
+import { CustomerSearch } from "@/components/customer-search";
 import { NewsFeed } from "@/components/news-feed";
 
 interface Props {
@@ -43,6 +45,7 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
     null,
   );
   const [newsOpen, setNewsOpen] = useState(false);
+  const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
 
   const days = useMemo(
     () => (isMobile ? [viewDate] : weekDays(viewDate)),
@@ -100,6 +103,13 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
         </div>
 
         <div className="flex items-center justify-end gap-3">
+          <div className="hidden md:block">
+            <CustomerSearch
+              customers={customers}
+              onSelect={setViewingCustomer}
+            />
+          </div>
+
           <Button
             variant={showCancelled ? "secondary" : "outline"}
             size="icon"
@@ -162,6 +172,11 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
         defaultStart={creating?.start ?? null}
         customers={customers}
         onClose={() => setCreating(null)}
+      />
+
+      <CustomerDialog
+        customer={viewingCustomer}
+        onClose={() => setViewingCustomer(null)}
       />
     </div>
   );
