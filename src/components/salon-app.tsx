@@ -54,6 +54,17 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
     setMobileSearchOpen(false);
   }, []);
 
+  // From the customer dialog: close it, move the calendar to the appointment's
+  // day, and open that appointment.
+  const openAppointmentFromCustomer = useCallback(
+    (appt: AppointmentWithCustomer) => {
+      setViewingCustomer(null);
+      router.push(`/?date=${format(appt.startsAt, "yyyy-MM-dd")}`);
+      setEditing(appt);
+    },
+    [router],
+  );
+
   const days = useMemo(
     () => (isMobile ? [viewDate] : weekDays(viewDate)),
     [isMobile, viewDate],
@@ -209,6 +220,7 @@ export function SalonApp({ dateIso, appointments, customers, news }: Props) {
       <CustomerDialog
         customer={viewingCustomer}
         onClose={() => setViewingCustomer(null)}
+        onOpenAppointment={openAppointmentFromCustomer}
       />
     </div>
   );
